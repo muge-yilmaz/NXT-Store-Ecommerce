@@ -5,9 +5,10 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { updateProduct } from "@/lib/products";
 import { uploadProductImagesService } from "@/services/imageService";
+import { requireAdmin } from "@/lib/auth0-utils";
 
 export async function handleEditAction(formData: FormData) {
-  "use server";
+  await requireAdmin();
 
   const productId = formData.get("productId") as string;
   const currentImageUrls = formData.getAll("currentImageUrls") as string[];

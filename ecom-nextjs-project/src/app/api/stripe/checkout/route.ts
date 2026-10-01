@@ -23,6 +23,17 @@ export async function POST(req: NextRequest) {
     // Aktif kullanıcı oturumunu çekiyoruz
     const user = await getSessionUser();
 
+    // Eğer kullanıcı giriş yapmamışsa ÖDEME OTURUMU OLUŞTURMA! Anında 401 dön.
+    if (!user || (!user.sub && !user.id)) {
+      return NextResponse.json(
+        { error: "Unauthorized. You must be logged in to checkout." },
+        { status: 401 }
+      );
+    }
+
+    const userId = user.sub || user.id;
+    const userEmail = user.email || "";
+
     // Sepette 1 ürün de olsa, 5 ürün de olsa hepsini tek seferde JSON olarak yakalıyoruz:
     const body = await req.json().catch(() => ({}));
 

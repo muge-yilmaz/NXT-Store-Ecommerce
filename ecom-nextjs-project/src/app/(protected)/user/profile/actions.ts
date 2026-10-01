@@ -1,6 +1,6 @@
 'use server';
 
-import { getSessionUser } from "@/lib/auth0-utils";
+import { getSessionUser, requireUser } from "@/lib/auth0-utils";
 import { updateAuth0UserProfile } from "@/lib/auth0Management";
 import { prisma } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
@@ -27,9 +27,13 @@ const addressSchema = z.object({
 // 1. Hesap Bilgilerini (İsim ve E-posta) Hem Auth0'da Hem MongoDB'de Güncelleme Action'ı
 export async function updateUserProfile(formdata: FormData) {
 
-  const user = await getSessionUser();
-  if (!user || !user.sub) {
-    throw new Error("User not authenticated");
+  // Standart Yetki Kontrolü
+  const user = await requireUser();
+
+  const userId = user?.sub || (user as any)?.id;
+
+  if (!userId) {
+    throw new Error("User ID is missing");
   }
 
  const rawData = {
@@ -41,12 +45,12 @@ const validatedData = profileSchema.parse(rawData);
 
   try {
     // A. Önce Auth0 tarafındaki bilgileri (isim ve mail) güncelliyoruz
-    await updateAuth0UserProfile(user.sub, { 
+    await updateAuth0UserProfile(userId, { 
       name: validatedData.name,
       email: validatedData.email
     });
     
-    await updateUserProfileService(user.sub, validatedData); // B. MongoDB tarafında da güncelleme yapıyoruz
+    await updateUserProfileService(userId, validatedData); // B. MongoDB tarafında da güncelleme yapıyoruz
 
     revalidatePath("/user/profile"); // Sayfayı yenilemek için revalidatePath kullanıyoruz
   } catch (error) {
@@ -59,9 +63,13 @@ const validatedData = profileSchema.parse(rawData);
 // 2. Adres Bilgilerini Sadece MongoDB'de Güncelleme Action'ı
 export async function updateUserAddress(formdata: FormData) {
 
-  const user = await getSessionUser();
-  if (!user || !user.sub) {
-    throw new Error("User not authenticated");
+  // 🌟 Standart Yetki Kontrolü
+  const user = await requireUser();
+
+  const userId = user?.sub || (user as any)?.id;
+
+  if (!userId) {
+    throw new Error("User ID is missing");
   }
 
   const rawData = {
@@ -76,7 +84,7 @@ export async function updateUserAddress(formdata: FormData) {
 
 
   try {
-    await updateUserAddressService(user.sub, {
+    await updateUserAddressService(userId, {
         address: validatedData.address,
         city: validatedData.city || "",
         postalCode: validatedData.postalCode || "",

@@ -3,6 +3,7 @@
 import { prisma } from "@/lib/prisma";
 import { createNotification } from "@/lib/notifications";
 import { revalidatePath } from "next/cache";
+import { requireUser } from "@/lib/auth0-utils";
 
 export async function submitSupportTicketAction(formData: {
   orderId?: string;
@@ -10,6 +11,7 @@ export async function submitSupportTicketAction(formData: {
   message: string;
 }) {
   try {
+    await requireUser();
     const db = prisma as any;
 
     if (db.supportTicket) {

@@ -1,10 +1,14 @@
 "use server";
 
+import { requireUser } from "@/lib/auth0-utils";
 import { prisma } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
 
 export async function cancelOrderAction(orderId: string) {
   try {
+    // OTURUM VE KULLANICI DOĞRULAMA (requireUser)
+    // Giriş yapılmamışsa bu satır hata fırlatır veya işlemi durdurur
+    const user = await requireUser();
     const db = prisma as any;
 
     if (!db.order) {
@@ -18,6 +22,29 @@ export async function cancelOrderAction(orderId: string) {
 
     if (!order) {
       return { success: false, error: "Order not found." };
+    }
+
+    // SAHİPLİK KONTROLÜ (VERIFY ORDER OWNERSHIP)
+    // Giriş yapan kullanıcının ID'si ile siparişin sahibi eşleşiyor mu?
+    // 3. Esnek ve Güvenli Sahiplik Kontrolü (Ownership Check)
+    const currentUserId = user.sub || user.id;
+    const currentUserEmail = user.email;
+
+    const isOwner =
+      (order.userId && order.userId === currentUserId) ||
+      (order.userEmail && order.userEmail === currentUserEmail);
+
+    if (!isOwner) {
+      console.error("Cancel Order Failed: User is not owner of order", {
+        orderUserId: order.userId,
+        orderUserEmail: order.userEmail,
+        currentUserId,
+        currentUserEmail,
+      });
+      return {
+        success: false,
+        error: "Unauthorized: You can only cancel your own orders.",
+      };
     }
 
     // 2. Kargo kontrolü: Kargoya verildiyse kullanıcı iptal edemez

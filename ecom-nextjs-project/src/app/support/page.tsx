@@ -117,7 +117,9 @@ export default function SupportPage() {
             </CardDescription>
           </CardHeader>
           <CardContent className="text-sm font-medium ">
+          <a href="mailto:support@nxtstore.com" className="text-primary hover:underline">
             support@nxtstore.com
+          </a>
           </CardContent>
         </Card>
 
@@ -130,7 +132,9 @@ export default function SupportPage() {
             </CardDescription>
           </CardHeader>
           <CardContent className="text-sm font-medium">
-            +90 (850) 123-4567
+            <a href="tel:+908501234567" className="text-primary hover:underline">
+              +90 (850) 123-4567
+            </a>
           </CardContent>
         </Card>
 

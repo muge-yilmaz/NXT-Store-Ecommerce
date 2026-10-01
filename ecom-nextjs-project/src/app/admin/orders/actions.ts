@@ -4,10 +4,14 @@ import { sendOrderCancelledEmail, sendOrderReceivedEmail, sendOrderShippedEmail 
 import { prisma } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
 import { createNotification } from "@/lib/notifications";
+import { requireAdmin, requireUser } from "@/lib/auth0-utils";
 
 // 1. Siparişi Kargoya Verme
 export async function markOrderAsShippedAction(orderId: string) {
   try {
+    // ADMİN YETKİ KONTROLÜ
+    await requireAdmin();
+
     const db = prisma as any;
 
     // const updatedOrder değişkenine atıyoruz:
@@ -46,6 +50,9 @@ export async function markOrderAsShippedAction(orderId: string) {
 // 2. Siparişi Admin Olarak İptal Etme
 export async function adminCancelOrderAction(orderId: string) {
   try {
+    // ADMİN YETKİ KONTROLÜ
+    await requireAdmin();
+
     const db = prisma as any;
 
     // const updatedOrder değişkenine atıyoruz:
@@ -84,6 +91,8 @@ export async function adminCancelOrderAction(orderId: string) {
 
 export async function userCancelOrderAction(orderId: string) {
   try {
+    // KULLANICI YETKİ VE SAHİPLİK KONTROLÜ
+    const user = await requireUser();
     const db = prisma as any;
 
     // 1. Siparişi veritabanında USER tarafından iptal edildi olarak güncelle

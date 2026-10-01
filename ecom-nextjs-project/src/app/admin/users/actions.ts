@@ -31,7 +31,7 @@ export async function toggleUserSuspensionAction(userId: string, suspend: boolea
     const updatedUser = await db.user.update({
       where: { id: userId },
       data: {
-        isSuspended: suspend,
+        isSuspended: nextSuspendState,
       },
     });
 
@@ -39,8 +39,8 @@ export async function toggleUserSuspensionAction(userId: string, suspend: boolea
     if (updatedUser?.email) {
       await createNotification({
         userId: updatedUser.email,
-        title: suspend ? "Account Suspended" : "Account Reactivated",
-        message: suspend
+        title: nextSuspendState ? "Account Suspended" : "Account Reactivated",
+        message: nextSuspendState
           ? "Your account has been suspended by an administrator."
           : "Your account suspension has been lifted.",
         link: "/support", // Kullanıcıyı destek sayfasına yönlendirebilirsiniz

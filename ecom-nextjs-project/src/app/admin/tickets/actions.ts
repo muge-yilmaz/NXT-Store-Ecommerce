@@ -1,10 +1,14 @@
 "use server";
 
+import { requireAdmin } from "@/lib/auth0-utils";
 import { prisma } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
 
 export async function toggleTicketStatusAction(ticketId: string, newStatus: string) {
   try {
+
+    // ADMİN YETKİ KONTROLÜ
+    await requireAdmin();
     const db = prisma as any;
 
     if (db.supportTicket) {
@@ -25,6 +29,8 @@ export async function toggleTicketStatusAction(ticketId: string, newStatus: stri
 
 export async function deleteTicketAction(ticketId: string) {
   try {
+    // ADMİN YETKİ KONTROLÜ
+    await requireAdmin();
     const db = prisma as any;
 
     if (db.supportTicket) {

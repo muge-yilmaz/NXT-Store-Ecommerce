@@ -11,6 +11,7 @@ import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 import { uploadProductImagesService } from '@/services/imageService';
 import { stripe } from "@/lib/stripe";
+import { requireAdmin } from '@/lib/auth0-utils';
 
 export type CreateProductFormValues = {
   name: string;
@@ -59,6 +60,11 @@ export async function createProduct(
   _prevState: CreateProductState | null,
   formData: FormData,
 ): Promise<CreateProductState | null> {
+  // İLK SATIRDA ADMİN DOĞRULAMASI
+  // İsteği atan kullanıcı admin değilse işlem burada kesilir
+  await requireAdmin();
+
+
   const values = parseFormValues(formData);
 
   const parsed = createProductDataSchema.safeParse(values);
