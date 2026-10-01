@@ -3,33 +3,44 @@ import { endpointSecret, stripe } from '../../../common/stripe'
 import checkoutService from '../../../services/checkout/service';
 import Stripe from 'stripe'
 
-async function receiveUpdates(req: Request, res: Response) {
+async function receiveUpdates(req: Request, res: Response): Promise<void> {
   console.log('Reached Stripe Webhoooks receive updates function')
 
-  let event: Stripe.Event = req.body; // Koda Stripe standartlarına uygunluk kazandırdık.
 
   // 1. Signature Verification
-  if (endpointSecret) {
-    const signature = req.headers['stripe-signature'] as string;
-
-    if (!signature) {
-      console.log('⚠️ Stripe signature missing in request headers.')
-      return res.status(400).send('Missing signature')
-    }
-
-    try {
-      event = stripe.webhooks.constructEvent(
-        req.body,
-        signature,
-        endpointSecret
-      )
-    } catch (err:any) {
-      console.log(`⚠️  Webhook signature verification failed.`, err.message);
-      return res.status(400).send(`Webhook Error: ${err.message}`);
-    }
+  // 1. STRIPE_WEBHOOK_SECRET Kontrolü (İmzasız istekleri engeller)
+  if (!endpointSecret) {
+    console.error('❌ STRIPE_WEBHOOK_SECRET is missing!');
+    res.status(500).json({ error: 'Webhook secret is not configured' });
+    return;
   }
 
-  // 2. Handle Events (Olayları İşleme)
+  // 2. Stripe Signature Kontrolü
+  const signature = req.headers['stripe-signature'];
+  if (!signature || Array.isArray(signature)) {
+    console.log('⚠️ Stripe signature missing or invalid header.');
+    res.status(400).send('Missing signature');
+    return;
+  }
+
+  let event: Stripe.Event;
+
+  try {
+    event = stripe.webhooks.constructEvent(
+      req.body,
+      signature,
+      endpointSecret
+    );
+  } catch (err: any) {
+    const errorMessage = err instanceof Error ? err.message : 'Unknown signature error';
+    console.log(`⚠️ Webhook signature verification failed:`, errorMessage);
+    res.status(400).send(`Webhook Error: ${errorMessage}`);
+    return;
+  }
+
+
+// 2. Handle Events (Olayları İşleme)
+try {
   switch (event.type) {
     // 🟢 Başarılı Ödeme
     case 'checkout.session.completed': {
@@ -48,7 +59,7 @@ async function receiveUpdates(req: Request, res: Response) {
       // İleride buraya expired servisi eklenebilir
       break;
     }
-    
+
     case 'checkout.session.async_payment_failed': {
       const session = event.data.object as Stripe.Checkout.Session;
       console.log(`❌ Async Payment failed for Checkout Session ${session.id}.`)
@@ -93,7 +104,7 @@ async function receiveUpdates(req: Request, res: Response) {
 
     // 🏷️ Fiyat Değişikliği / Yeni Fiyat Ekleme
     case 'price.created':
-    case 'price.updated':{
+    case 'price.updated': {
       const price = event.data.object as Stripe.Price;
       console.log(`Price update event received for ID: ${price.id}`);
       await checkoutService.handlePriceCreatedOrUpdated(price.id);
@@ -101,7 +112,7 @@ async function receiveUpdates(req: Request, res: Response) {
     }
 
     // 👤 Müşteri Bilgisi Güncelleme
-    case 'customer.updated':{
+    case 'customer.updated': {
       const customer = event.data.object as Stripe.Customer;
       console.log(`👤 Customer update event received for ID: ${customer.id}`);
       await checkoutService.handleCustomerUpdated(customer.id);
@@ -116,29 +127,31 @@ async function receiveUpdates(req: Request, res: Response) {
       break;
     }
 
-    
+
     default:
-      // Unexpected event type
-      console.log(`ℹ️ Unhandled event type ${event.type}.`);
+        console.log(`ℹ️ Unhandled event type ${event.type}.`);
+    }
+  } catch (processErr) {
+    console.error('Error processing webhook event:', processErr);
   }
 
-  // Return a 200 response to acknowledge receipt of the event
-  return res.status(200).json({ received: true })
+  res.status(200).json({ received: true });
 }
 
 // Frontend'deki "Pay Total" Butonuna Basılınca Ödeme Linki Üreten Fonksiyon
-async function createCheckout(req: Request, res: Response) {
+async function createCheckout(req: Request, res: Response): Promise<void> {
   try {
-    const {cartItems} = req.body;
+    const { cartItems } = req.body;
 
-    if (!cartItems || cartItems.length === 0){
-      return res.status(400).json({ error: 'Cart is empty'});
+    if (!cartItems || !Array.isArray(cartItems) || cartItems.length === 0) {
+      res.status(400).json({ error: 'Cart is empty' });
+      return;
     }
 
     // Stripe üzerinde güvenli ödeme oturumu başlatıyoruz
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ['card'],
-      line_items: cartItems.map((item:any) => ({
+      line_items: cartItems.map((item: any) => ({
         price: item.stripePriceId, // Sepetteki ürünün Stripe Price ID'si
         quantity: item.quantity,
       })),
@@ -148,10 +161,11 @@ async function createCheckout(req: Request, res: Response) {
     });
 
     // Stripe Ödeme Linkini Front-end'e Döneceğiz
-    return res.status(200).json({ url: session.url });
-    } catch (error: any) {
-      console.error('Checkout error:', error.message);
-      return res.status(500).json({ error: error.message });
+    res.status(200).json({ url: session.url });
+  } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : 'Checkout error';
+    console.error('Checkout error:', errorMessage);
+    res.status(500).json({ error: errorMessage });
   }
 }
 
