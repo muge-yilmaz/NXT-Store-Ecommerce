@@ -8,7 +8,7 @@ async function receiveUpdates(req: Request, res: Response): Promise<void> {
 
 
   // 1. Signature Verification
-  // 1. STRIPE_WEBHOOK_SECRET Kontrolü (İmzasız istekleri engeller)
+  // STRIPE_WEBHOOK_SECRET Kontrolü (İmzasız istekleri engeller)
   if (!endpointSecret) {
     console.error('STRIPE_WEBHOOK_SECRET is missing!');
     res.status(500).json({ error: 'Webhook secret is not configured' });
@@ -39,66 +39,66 @@ async function receiveUpdates(req: Request, res: Response): Promise<void> {
   }
 
 
-// 2. Handle Events (Olayları İşleme)
-try {
-  switch (event.type) {
-    // Başarılı Ödeme
-    case 'checkout.session.completed': {
-      const session = event.data.object as Stripe.Checkout.Session;
-      console.log(`Checkout Session ${session.id} was successful!`);
+  // 2. Handle Events (Olayları İşleme)
+  try {
+    switch (event.type) {
+      // Başarılı Ödeme
+      case 'checkout.session.completed': {
+        const session = event.data.object as Stripe.Checkout.Session;
+        console.log(`Checkout Session ${session.id} was successful!`);
 
-      // Servisi çağırıp başarılı ödeme mantığını yürütüyoruz
-      await checkoutService.handleSuccessfullCheckout(session.id);
-      break;
-    }
+        // Servisi çağırıp başarılı ödeme mantığını yürütüyoruz
+        await checkoutService.handleSuccessfullCheckout(session.id);
+        break;
+      }
 
-    // Süresi Dolan Ödeme Oturumu
-    case 'checkout.session.expired': {
-      const session = event.data.object as Stripe.Checkout.Session;
-      console.log(`Checkout Session ${session.id} expired.`)
-      break;
-    }
+      // Süresi Dolan Ödeme Oturumu
+      case 'checkout.session.expired': {
+        const session = event.data.object as Stripe.Checkout.Session;
+        console.log(`Checkout Session ${session.id} expired.`)
+        break;
+      }
 
-    case 'checkout.session.async_payment_failed': {
-      const session = event.data.object as Stripe.Checkout.Session;
-      console.log(`Async Payment failed for Checkout Session ${session.id}.`)
-      break;
-    }
+      case 'checkout.session.async_payment_failed': {
+        const session = event.data.object as Stripe.Checkout.Session;
+        console.log(`Async Payment failed for Checkout Session ${session.id}.`)
+        break;
+      }
 
-    case 'checkout.session.async_payment_succeeded': {
-      const session = event.data.object as Stripe.Checkout.Session;
-      console.log(`Async Payment succeeded for Checkout Session ${session.id}.`)
-      break;
-    }
+      case 'checkout.session.async_payment_succeeded': {
+        const session = event.data.object as Stripe.Checkout.Session;
+        console.log(`Async Payment succeeded for Checkout Session ${session.id}.`)
+        break;
+      }
 
-    // Para İadesi İşlemi
-    case 'charge.refunded': {
-      const charge = event.data.object as Stripe.Charge;
-      console.log(`Charge ${charge.id} was refunded.`)
-      
-      // service.ts dosyasındaki handleRefund fonksiyonumuzu çağırıyoruz
-      await checkoutService.handleRefund(charge.id);
-      break;
-    }
+      // Para İadesi İşlemi
+      case 'charge.refunded': {
+        const charge = event.data.object as Stripe.Charge;
+        console.log(`Charge ${charge.id} was refunded.`)
 
-    // Müşteri Bilgisi Güncelleme
-    case 'customer.updated': {
-      const customer = event.data.object as Stripe.Customer;
-      console.log(`Customer update event received for ID: ${customer.id}`);
-      await checkoutService.handleCustomerUpdated(customer.id);
-      break;
-    }
+        // service.ts dosyasındaki handleRefund fonksiyonumuzu çağırıyoruz
+        await checkoutService.handleRefund(charge.id);
+        break;
+      }
 
-    // Ödeme İtirazı / Chargeback (Admin için kritik)
-    case 'charge.dispute.created': {
-      const dispute = event.data.object as Stripe.Dispute;
-      console.log(`Dispute created event received for ID: ${dispute.id}`);
-      await checkoutService.handleDisputeCreated(dispute.id);
-      break;
-    }
+      // Müşteri Bilgisi Güncelleme
+      case 'customer.updated': {
+        const customer = event.data.object as Stripe.Customer;
+        console.log(`Customer update event received for ID: ${customer.id}`);
+        await checkoutService.handleCustomerUpdated(customer.id);
+        break;
+      }
+
+      // Ödeme İtirazı / Chargeback (Admin için kritik)
+      case 'charge.dispute.created': {
+        const dispute = event.data.object as Stripe.Dispute;
+        console.log(`Dispute created event received for ID: ${dispute.id}`);
+        await checkoutService.handleDisputeCreated(dispute.id);
+        break;
+      }
 
 
-    default:
+      default:
         console.log(`Unhandled event type ${event.type}.`);
     }
   } catch (processErr) {
