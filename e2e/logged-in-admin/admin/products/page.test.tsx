@@ -1,10 +1,13 @@
+// @ts-nocheck
 import { test, expect } from '@playwright/test';
 
 test.describe('Admin - Product Lifecycle', () => {
   const uniqueId = Date.now();
   const testProductName = `ProdInit${uniqueId}`;
   const updatedProductName = `ProdEdit${uniqueId}`;
-
+  const updatedDescription = 'Updated E2E test description.';
+  const updatedPrice = '149';
+  const updatedStock = '25';
   const validPngBuffer = Buffer.from(
     'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==',
     'base64'
@@ -19,7 +22,7 @@ test.describe('Admin - Product Lifecycle', () => {
     await page.getByRole('link', { name: 'Create product' }).first().click();
 
     await page.getByLabel('Name').fill(testProductName);
-    await page.getByLabel('Description').fill('E2E test ürün açıklaması.');
+    await page.getByLabel('Description').fill('E2E test product description');
     await page.getByLabel('Price').fill('99');
     await page.getByLabel('Stock').fill('10');
 
@@ -39,19 +42,19 @@ test.describe('Admin - Product Lifecycle', () => {
     const productRow = page.locator('tr', { hasText: testProductName });
     await productRow.getByRole('link', { name: 'Edit' }).click();
 
-    const nameInput = page.getByRole('textbox').first();
-    await expect(nameInput).toBeVisible();
-    await nameInput.fill(updatedProductName);
+    await page.getByLabel('Name').fill(updatedProductName);
+    await page.getByLabel('Description').fill(updatedDescription);
+    await page.getByLabel('Price').fill(updatedPrice);
+    await page.getByLabel('Stock').fill(updatedStock);
 
     await page.getByRole('button', { name: /save changes|save/i }).click();
 
-    await page.waitForTimeout(3000);
-    await page.goto('/admin/products');
-    await expect(page.getByText(updatedProductName)).toBeVisible({ timeout: 15_000 });
-
-    // 4. ADIM: Ürün Sil (Delete)
+  // Dinamik bekleme: waitForTimeout yerine URL ve görünürlük kontrolü
+    await expect(page).toHaveURL(/\/admin\/products/, { timeout: 15_000 });
     const updatedRow = page.locator('tr', { hasText: updatedProductName });
-    
+    await expect(updatedRow).toBeVisible({ timeout: 15_000 });
+   
+    // 4. ADIM: Ürün Sil (Delete) 
     // Tablodaki Delete/Remove linkine/butonuna basarak silme sayfasına yönlen
     await updatedRow.getByRole('link', { name: /delete|remove/i }).click();
 
@@ -59,9 +62,8 @@ test.describe('Admin - Product Lifecycle', () => {
     await expect(page.getByText('Confirm deletion')).toBeVisible({ timeout: 10_000 });
     await page.getByRole('button', { name: 'Delete product' }).click();
 
-    // Silindikten sonra listenin güncellendiğini doğrula
-    await page.waitForTimeout(2000);
-    await page.goto('/admin/products');
+    // Dinamik bekleme: Silindikten sonra elemanın listede olmadığını kontrol et
+    await expect(page).toHaveURL(/\/admin\/products/, { timeout: 15_000 });
     await expect(page.getByText(updatedProductName)).not.toBeVisible({ timeout: 15_000 });
   });
 });
