@@ -130,7 +130,7 @@ export async function getProductById(id: string): Promise<Product | null> {
 
 // createProduct fonksiyonunu dışarıdan gelen Stripe ID'lerini kabul edecek şekilde genişlettik
 export async function createProduct(
-  data: CreateProductData & { stripeProductId?: string | null; stripePriceId?: string | null },
+  data: CreateProductData & { stripeProductId: string; stripePriceId: string },
   imageUrls: string[],
 ): Promise<Product> {
   const record = await prisma.product.create({
