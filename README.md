@@ -30,12 +30,16 @@ The project is live and deployed on Vercel:
   <table>
     <tr>
       <td width="50%">
-        <h4 align="center">👤 User Profile Management</h4>
-        <img src="https://raw.githubusercontent.com/muge-yilmaz/NXT-Store-Ecommerce/main/assets/user-profile.png" alt="User Profile Page" />
+        <h4 align="center">👤 User Orders Management</h4>
+        <img src="https://raw.githubusercontent.com/muge-yilmaz/NXT-Store-Ecommerce/main/assets/user-orders-page.png" alt="User Orders Page" />
       </td>
       <td width="50%">
-        <h4 align="center">🛡️ Admin Product Lifecycle</h4>
-        <img src="https://raw.githubusercontent.com/muge-yilmaz/NXT-Store-Ecommerce/main/assets/admin-products.png" alt="Admin Product Management" />
+        <h4 align="center">🛡️ Admin Dashboard Lifecycle</h4>
+        <img src="https://raw.githubusercontent.com/muge-yilmaz/NXT-Store-Ecommerce/main/assets/admin-dashboard.png" alt="Admin Dashboard" />
+      </td>
+      <td width="50%">
+        <h4 align="center">🛡️ Admin Order Management</h4>
+        <img src="https://raw.githubusercontent.com/muge-yilmaz/NXT-Store-Ecommerce/main/assets/admin-order-management.png" alt="Admin Order Management" />
       </td>
     </tr>
   </table>
