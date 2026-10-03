@@ -22,17 +22,18 @@ The project is live and deployed on Vercel:
 ## 📸 Screenshots & Visual Preview
 
 <div align="center">
-  <h3>Storefront & Product Catalog</h3>
-  <img src="https://raw.githubusercontent.com/muge-yilmaz/NXT-Store-Ecommerce/main/assets/homepage.png" alt="NXT Store Homepage" width="100%" />
-
-  <br/><br/>
-
   <table>
     <tr>
+      <td width="50%">
+        <h4 align="center">🛍️ Storefront & Catalog</h4>
+        <img src="https://raw.githubusercontent.com/muge-yilmaz/NXT-Store-Ecommerce/main/assets/homepage.png" alt="NXT Store Homepage" width="100%" />
+       </td>
       <td width="50%">
         <h4 align="center">👤 User Orders Management</h4>
         <img src="https://raw.githubusercontent.com/muge-yilmaz/NXT-Store-Ecommerce/main/assets/user-orders-page.png" alt="User Orders Page" />
       </td>
+     </tr>
+     <tr>
       <td width="50%">
         <h4 align="center">🛡️ Admin Dashboard Lifecycle</h4>
         <img src="https://raw.githubusercontent.com/muge-yilmaz/NXT-Store-Ecommerce/main/assets/admin-dashboard.png" alt="Admin Dashboard" />
@@ -210,8 +211,4 @@ Distributed for educational and portfolio demonstration purposes.
 
 * **Email:** [mugeyilmaz.web@gmail.com](https://www.google.com/search?q=mailto%3Amugeyilmaz.web%40gmail.com)
 * **LinkedIn:** [linkedin.com/in/muge-yilmaz](https://linkedin.com/in/muge-yilmaz)
-<<<<<<< HEAD
 * **GitHub:** [github.com/muge-yilmaz](https://github.com/muge-yilmaz)
-=======
-* **GitHub:** [github.com/muge-yilmaz](https://github.com/muge-yilmaz)
->>>>>>> 623fd0a3e4c97e3c67c0ac7a46dd5ddb9db2bec6
