@@ -8,5 +8,5 @@ if (!endpointSecret || !stripeApiKey ) {
 }
 
 export const stripe = new stripeLibrary(stripeApiKey, {
-  apiVersion: '2023-10-16' as any,
+  apiVersion: '2026-07-29.dahlia' as any,
 });

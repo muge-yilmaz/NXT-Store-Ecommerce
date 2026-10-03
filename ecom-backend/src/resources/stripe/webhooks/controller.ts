@@ -10,7 +10,7 @@ async function receiveUpdates(req: Request, res: Response): Promise<void> {
   // 1. Signature Verification
   // 1. STRIPE_WEBHOOK_SECRET Kontrolü (İmzasız istekleri engeller)
   if (!endpointSecret) {
-    console.error('❌ STRIPE_WEBHOOK_SECRET is missing!');
+    console.error('STRIPE_WEBHOOK_SECRET is missing!');
     res.status(500).json({ error: 'Webhook secret is not configured' });
     return;
   }
@@ -18,7 +18,7 @@ async function receiveUpdates(req: Request, res: Response): Promise<void> {
   // 2. Stripe Signature Kontrolü
   const signature = req.headers['stripe-signature'];
   if (!signature || Array.isArray(signature)) {
-    console.log('⚠️ Stripe signature missing or invalid header.');
+    console.log('Stripe signature missing or invalid header.');
     res.status(400).send('Missing signature');
     return;
   }
@@ -33,7 +33,7 @@ async function receiveUpdates(req: Request, res: Response): Promise<void> {
     );
   } catch (err: any) {
     const errorMessage = err instanceof Error ? err.message : 'Unknown signature error';
-    console.log(`⚠️ Webhook signature verification failed:`, errorMessage);
+    console.log(`Webhook signature verification failed:`, errorMessage);
     res.status(400).send(`Webhook Error: ${errorMessage}`);
     return;
   }
@@ -42,94 +42,64 @@ async function receiveUpdates(req: Request, res: Response): Promise<void> {
 // 2. Handle Events (Olayları İşleme)
 try {
   switch (event.type) {
-    // 🟢 Başarılı Ödeme
+    // Başarılı Ödeme
     case 'checkout.session.completed': {
       const session = event.data.object as Stripe.Checkout.Session;
-      console.log(`✅ Checkout Session ${session.id} was successful!`);
+      console.log(`Checkout Session ${session.id} was successful!`);
 
       // Servisi çağırıp başarılı ödeme mantığını yürütüyoruz
       await checkoutService.handleSuccessfullCheckout(session.id);
       break;
     }
 
-    // ⏳ Süresi Dolan Ödeme Oturumu
+    // Süresi Dolan Ödeme Oturumu
     case 'checkout.session.expired': {
       const session = event.data.object as Stripe.Checkout.Session;
-      console.log(`⏳ Checkout Session ${session.id} expired.`)
-      // İleride buraya expired servisi eklenebilir
+      console.log(`Checkout Session ${session.id} expired.`)
       break;
     }
 
     case 'checkout.session.async_payment_failed': {
       const session = event.data.object as Stripe.Checkout.Session;
-      console.log(`❌ Async Payment failed for Checkout Session ${session.id}.`)
-      // İleride buraya payment failed servisi eklenebilir
+      console.log(`Async Payment failed for Checkout Session ${session.id}.`)
       break;
     }
 
     case 'checkout.session.async_payment_succeeded': {
       const session = event.data.object as Stripe.Checkout.Session;
-      console.log(`✅ Async Payment succeeded for Checkout Session ${session.id}.`)
-      // İleride buraya payment succeeded servisi eklenebilir
+      console.log(`Async Payment succeeded for Checkout Session ${session.id}.`)
       break;
     }
 
-    // 🔴 Para İadesi İşlemi
+    // Para İadesi İşlemi
     case 'charge.refunded': {
       const charge = event.data.object as Stripe.Charge;
-      console.log(`💸 Charge ${charge.id} was refunded.`)
-
+      console.log(`Charge ${charge.id} was refunded.`)
+      
       // service.ts dosyasındaki handleRefund fonksiyonumuzu çağırıyoruz
       await checkoutService.handleRefund(charge.id);
       break;
     }
 
-    // 📦 Ürün Güncelleme / Ekleme İşlemi
-    case 'product.created':
-    case 'product.updated':
-    case 'product.deleted': {
-      const product = event.data.object as Stripe.Product;
-      console.log(`📦 Product event received for ID: ${product.id}`);
-      await checkoutService.handleProductUpdated(product.id);
-      break;
-    }
-
-    // 🗑️ Ürün Silme Olayı
-    case 'product.deleted': {
-      const deletedProduct = event.data.object as unknown as Stripe.DeletedProduct;
-      console.log(`🗑️ Product deleted event received for ID: ${deletedProduct.id}`);
-      await checkoutService.handleProductDeleted(deletedProduct.id);
-      break;
-    }
-
-    // 🏷️ Fiyat Değişikliği / Yeni Fiyat Ekleme
-    case 'price.created':
-    case 'price.updated': {
-      const price = event.data.object as Stripe.Price;
-      console.log(`Price update event received for ID: ${price.id}`);
-      await checkoutService.handlePriceCreatedOrUpdated(price.id);
-      break;
-    }
-
-    // 👤 Müşteri Bilgisi Güncelleme
+    // Müşteri Bilgisi Güncelleme
     case 'customer.updated': {
       const customer = event.data.object as Stripe.Customer;
-      console.log(`👤 Customer update event received for ID: ${customer.id}`);
+      console.log(`Customer update event received for ID: ${customer.id}`);
       await checkoutService.handleCustomerUpdated(customer.id);
       break;
     }
 
-    // ⚠️ Ödeme İtirazı / Chargeback (Admin için kritik)
+    // Ödeme İtirazı / Chargeback (Admin için kritik)
     case 'charge.dispute.created': {
       const dispute = event.data.object as Stripe.Dispute;
-      console.log(`⚠️ Dispute created event received for ID: ${dispute.id}`);
+      console.log(`Dispute created event received for ID: ${dispute.id}`);
       await checkoutService.handleDisputeCreated(dispute.id);
       break;
     }
 
 
     default:
-        console.log(`ℹ️ Unhandled event type ${event.type}.`);
+        console.log(`Unhandled event type ${event.type}.`);
     }
   } catch (processErr) {
     console.error('Error processing webhook event:', processErr);
