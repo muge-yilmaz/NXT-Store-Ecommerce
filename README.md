@@ -207,7 +207,7 @@ Distributed for educational and portfolio demonstration purposes.
 
 ## 👩‍💻 Author & Contact
 
-**Müge Yılmaz** — Full-Stack Developer AI & UI/UX Engineer
+**Müge Yılmaz** — Full-Stack AI Developer & UI/UX Engineer
 
 * **Email:** [mugeyilmaz.web@gmail.com](https://www.google.com/search?q=mailto%3Amugeyilmaz.web%40gmail.com)
 * **LinkedIn:** [linkedin.com/in/muge-yilmaz](https://linkedin.com/in/muge-yilmaz)
