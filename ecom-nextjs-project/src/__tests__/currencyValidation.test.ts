@@ -13,7 +13,7 @@ describe('currencySchema (Zod Validation)', () => {
   });
 
   it('should invalidate an invalid currency', () => {
-    const invalidCurrency = "BTC"; // Örnek olarak geçersiz bir para birimi kullanıyoruz
+    const invalidCurrency = "BTC";
     const result = currencySchema.safeParse(invalidCurrency);
     expect(result.success).toBe(false);
   });

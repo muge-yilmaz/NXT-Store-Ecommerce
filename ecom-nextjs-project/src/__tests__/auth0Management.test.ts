@@ -18,14 +18,11 @@ describe('../lib/auth0Management.ts', () => {
   });
 
   it('should get management token successfully', async () => {
-    // global.fetch'i mock'luyoruz (1. Token almak için, 2. Profile güncellemek için)
     global.fetch = jest.fn().
-      // 1. fetch çağrısı (getManagementToken -> token döner)
       mockResolvedValueOnce({
         ok: true,
         json: async () => ({ access_token: 'test-access-token' }),
       } as Response).
-      // 2. fetch çağrısı (updateAuth0UserProfile -> kullanıcı güncellenir)
       mockResolvedValueOnce({
         ok: true,
         json: async () => ({ user_id: 'auth0|12345', name: 'Updated Name'}),

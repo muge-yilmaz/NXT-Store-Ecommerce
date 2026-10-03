@@ -3,7 +3,6 @@ import { ProductCategory, ProductSort } from "@/types/product";
 
 
 describe('Storefront Validation & Helper Tests', () => {
-  // TEST SENARYOSU 1: Sıralama Şeması (Sort)
   describe('productSortSchema', () => {
     it('should validate valid sort values', () => {
       const validSortValues = Object.values(ProductSort)[0];
@@ -20,7 +19,7 @@ describe('Storefront Validation & Helper Tests', () => {
     });
   });
 
-  // TEST SENARYOSU 2: Kategori Filtre Şeması (Union: "all" veya ProductCategory)
+
   describe('storefrontCategoryFilterSchema', () => {
     it('should validate "all" as a valid category filter', () => {
       const result = storefrontCategoryFilterSchema.safeParse("all");
@@ -36,7 +35,7 @@ describe('Storefront Validation & Helper Tests', () => {
     });
   });
 
-  // TEST SENARYOSU 3: Arama Parametrelerini Ayrıştırma (Helper Function)
+
   describe('parseStorefrontFiltersFromSearchParams', () => {
     it('should return default values when no search params are provided', () => {
       const result = parseStorefrontFiltersFromSearchParams({});
