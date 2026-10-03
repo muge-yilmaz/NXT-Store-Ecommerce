@@ -210,4 +210,8 @@ Distributed for educational and portfolio demonstration purposes.
 
 * **Email:** [mugeyilmaz.web@gmail.com](https://www.google.com/search?q=mailto%3Amugeyilmaz.web%40gmail.com)
 * **LinkedIn:** [linkedin.com/in/muge-yilmaz](https://linkedin.com/in/muge-yilmaz)
+<<<<<<< HEAD
 * **GitHub:** [github.com/muge-yilmaz](https://github.com/muge-yilmaz)
+=======
+* **GitHub:** [github.com/muge-yilmaz](https://github.com/muge-yilmaz)
+>>>>>>> 623fd0a3e4c97e3c67c0ac7a46dd5ddb9db2bec6
