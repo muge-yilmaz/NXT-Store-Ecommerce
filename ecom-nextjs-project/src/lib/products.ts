@@ -151,14 +151,73 @@ export async function updateProduct(
 ): Promise<Product> {
 
   const { currency, category, ...rest } = data;
+
+// 1. Önce MongoDB'deki mevcut ürünü bul
+  const existingProduct = await prisma.product.findUnique({
+    where: { id },
+  });
+
+  if (!existingProduct) {
+    throw new Error(`Product with id ${id} not found.`);
+  }
+
+  // Stripe'ı güncellerken kullanacağımız olası yeni ID'ler
+  let newStripePriceId = existingProduct.stripePriceId;
+  let newStripeProductId = existingProduct.stripeProductId;
+
+  // 2. STRIPE SENKRONİZASYONU
+  if (existingProduct.stripeProductId) {
+    try {
+      const stripeProductUpdateData: any = {};
+      
+      // İsim, açıklama veya aktiflik değiştiyse Stripe Ürününü güncelle
+      if (rest.name && rest.name !== existingProduct.name) {
+        stripeProductUpdateData.name = rest.name;
+      }
+      if (rest.description && rest.description !== existingProduct.description) {
+        stripeProductUpdateData.description = rest.description;
+      }
+      if (rest.isActive !== undefined && rest.isActive !== existingProduct.isActive) {
+        stripeProductUpdateData.active = rest.isActive;
+      }
+
+      if (Object.keys(stripeProductUpdateData).length > 0) {
+        await stripe.products.update(existingProduct.stripeProductId, stripeProductUpdateData);
+      }
+
+      // 3. FİYAT DEĞİŞTİYSE YENİ STRIPE PRICE OLUŞTUR VE ESKİSİNİ ARŞİVLE
+      if (rest.priceCents && rest.priceCents !== existingProduct.priceCents) {
+        // Eski fiyatı arşivle
+        if (existingProduct.stripePriceId) {
+          await stripe.prices.update(existingProduct.stripePriceId, { active: false });
+        }
+        
+        // Yeni fiyat oluştur
+        const newPrice = await stripe.prices.create({
+          product: existingProduct.stripeProductId,
+          unit_amount: rest.priceCents,
+          currency: (currency || existingProduct.currency).toLowerCase(),
+        });
+        
+        newStripePriceId = newPrice.id; // DB'ye kaydedilecek yeni Price ID
+      }
+    } catch (stripeError) {
+      console.error(`Stripe update failed for product ${id}:`, stripeError);
+      throw new Error("Failed to sync product updates with Stripe."); // Stripe başarısızsa işlemi durdur
+    }
+  }
+
+  // 4. MONGODB GÜNCELLEMESİ (Stripe Price güncellenmişse DB'ye yazılır)
   const record = await prisma.product.update({
     where: { id },
     data: {
       ...rest,
+      stripePriceId: newStripePriceId, // Yeni fiyat ID'sini yazıyoruz
       ...(currency && { currency: currency as Currency }),
       ...(category && { category: category as ProductCategory }),
     },
   });
+
   return toProduct(record);
 }
 
@@ -178,43 +237,53 @@ export function parseStorefrontFilters(
 import { stripe } from "@/lib/stripe";
 
 
-// delete products
+
+// delete products (Hataları Yutmayan Güvenli Hali)
 export async function deleteProduct(id: string): Promise<void> {
+  // 1. Ürünü DB'den bul
+  const product = await prisma.product.findUnique({ 
+    where: { id } 
+  });
+  
+  if (!product) return; // Zaten yoksa çık
+
+  // 2. STRIPE ARŞİVLEME KONTROLÜ
   try {
-    // 1. Ürünü DB'den bul ve Stripe bilgileri var mı kontrol et
-    const product = await prisma.product.findUnique({ 
-      where: { id } 
-    });
-    
-    if (product) {
-      // Stripe Fiyatını arşivle
-      if (product.stripePriceId) {
-        await stripe.prices.update(product.stripePriceId, { active: false }).catch(() => null);;
-      }
-      // Stripe Ürününü arşivle
-      if (product.stripeProductId) {
-        await stripe.products.update(product.stripeProductId, { active: false }).catch(() => null);;
-      }
+    if (product.stripePriceId) {
+      await stripe.prices.update(product.stripePriceId, { active: false });
+    }
+    if (product.stripeProductId) {
+      await stripe.products.update(product.stripeProductId, { active: false });
     }
   } catch (stripeError) {
-    console.error(`Stripe archiving failed with id ${id}, moving on to DB deletion:`, stripeError);
+    // İnceleyicinin uyarısı: Hataları YUTMA. Eğer Stripe'ta arşivleme patlarsa
+    // MongoDB silme işlemine GEÇME, hatayı dışarı fırlat!
+    console.error(`Stripe archiving failed for product ${id}. Aborting DB deletion.`, stripeError);
+    throw new Error(`Cannot delete product ${id} because Stripe archiving failed.`);
   }
 
-  // 2. Veritabanından (MongoDB) kaydı kalıcı olarak sil
+  // 3. SADECE STRIPE BAŞARILIYSA MONGODB'DEN SİL
   await prisma.product.delete({
     where: { id },
   });
 }
 
-
 // delete multiple products
 export async function deleteMultipleProducts(ids: string[]): Promise<void> {
+  const failedIds: string[] = [];
+
   for (const id of ids) {
     try {
       // Mevcut Stripe arşivleme ve DB silme mantığını her ürün için sırayla çağırır
       await deleteProduct(id);
     } catch (error) {
       console.error(`Failed to delete product with id ${id} during bulk delete:`, error);
+      failedIds.push(id);
     }
+  }
+
+// Eğer bazı ürünler silinemezse (örneğin Stripe hatası yüzünden) süreci bildir
+  if (failedIds.length > 0) {
+    throw new Error(`Failed to delete some products: ${failedIds.join(', ')}`);
   }
 }

@@ -3,7 +3,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { headers } from 'next/headers'
 import { stripe } from '@/lib/stripe';
 import { z } from 'zod';
-import { getSessionUser } from '@/lib/auth0-utils'; // Kullanıcı bilgisini almak için ekledik
+import { requireUserOr401 } from '@/lib/auth0-utils'; // Kullanıcı bilgisini almak için ekledik
 
 
 const CheckoutSchema = z.object({
@@ -20,19 +20,13 @@ export async function POST(req: NextRequest) {
     const headersList = await headers()
     const origin = headersList.get('origin')
 
-    // Aktif kullanıcı oturumunu çekiyoruz
-    const user = await getSessionUser();
-
-    // Eğer kullanıcı giriş yapmamışsa ÖDEME OTURUMU OLUŞTURMA! Anında 401 dön.
-    if (!user || (!user.sub && !user.id)) {
-      return NextResponse.json(
-        { error: "Unauthorized. You must be logged in to checkout." },
-        { status: 401 }
-      );
+   // requireUserOr401 kontrolü
+    const userOrResponse = await requireUserOr401();
+    if (userOrResponse instanceof Response) {
+      return userOrResponse; // Oturum yoksa doğrudan 401 döner
     }
 
-    const userId = user.sub || user.id;
-    const userEmail = user.email || "";
+    const user = userOrResponse;
 
     // Sepette 1 ürün de olsa, 5 ürün de olsa hepsini tek seferde JSON olarak yakalıyoruz:
     const body = await req.json().catch(() => ({}));
