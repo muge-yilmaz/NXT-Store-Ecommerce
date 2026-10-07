@@ -32,21 +32,18 @@ export function AdminProductsTable({ products }: { products: any[] }) {
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [isDeleting, setIsDeleting] = useState(false);
 
- // Modal durumları
   const [isBulkDeleteDialogOpen, setIsBulkDeleteDialogOpen] = useState(false);
   const [singleProductToDelete, setSingleProductToDelete] = useState<any | null>(null);
 
-  // Tümünü Seç (Select All)
   const handleSelectAll = (checked: boolean) => {
     if (checked) {
-      setSelectedIds(products.map((p) => p.id));  // Tablodaki tüm ürünlerin ID'lerini bir diziye aktarır
+      setSelectedIds(products.map((p) => p.id));
     } else {
-      setSelectedIds([]); // Seçimleri temizler
+      setSelectedIds([]);
     }
   };
 
 
-  // Tekil Seçim (Select Row)
   const handleSelectOne = (id: string, checked: boolean) => {
     if (checked) {
       setSelectedIds((prev) => [...prev, id]);  // Mevcut diziye yeni ID'yi ekler
@@ -55,18 +52,17 @@ export function AdminProductsTable({ products }: { products: any[] }) {
     }
   };
 
-// Toplu Silme İşlemi
+
   const handleConfirmBulkDelete = async () => {
     if (selectedIds.length === 0) return;
 
-    setIsDeleting(true);   // Butonu pasife alır
-    await bulkDeleteProductsAction(selectedIds);  // Server Action çağrısı
-    setSelectedIds([]);   // Seçimleri sıfırlar
-    setIsDeleting(false);  // Butonu tekrar aktif eder
+    setIsDeleting(true);
+    await bulkDeleteProductsAction(selectedIds);
+    setSelectedIds([]);
+    setIsDeleting(false);
     setIsBulkDeleteDialogOpen(false);
   };
 
-  // Tekil Silme İşlemi (Aynı Server Action ile)
   const handleConfirmSingleDelete = async () => {
     if (!singleProductToDelete) return;
 
@@ -92,7 +88,7 @@ export function AdminProductsTable({ products }: { products: any[] }) {
 
   return (
     <div className="space-y-4">
-      {/* Ürün seçildiğinde çıkan Toplu Silme Barı */}
+      {/* Selected Items Bar */}
       {selectedIds.length > 0 && (
         <div className="flex items-center justify-between rounded-lg border bg-muted/50 p-3">
           <span className="text-sm font-medium">
@@ -109,7 +105,7 @@ export function AdminProductsTable({ products }: { products: any[] }) {
         </div>
       )}
 
-      {/* 🌟 DÜZELTME: MOBİLDE TAŞMAYAN YATAY KAYDIRILABİLİR TABLO */}
+      {/* Product Table */}
       <div className="rounded-xl border border-border overflow-x-auto custom-scrollbar">
         <Table className="w-full min-w-[700px]">
           <TableHeader>
@@ -190,7 +186,7 @@ export function AdminProductsTable({ products }: { products: any[] }) {
         </Table>
       </div>
 
-      {/* Toplu Silme Onay Modalı */}
+      {/* Bulk Delete Confirmation Dialog */}
       <AlertDialog
         open={isBulkDeleteDialogOpen}
         onOpenChange={setIsBulkDeleteDialogOpen}
@@ -216,7 +212,7 @@ export function AdminProductsTable({ products }: { products: any[] }) {
         </AlertDialogContent>
       </AlertDialog>
 
-      {/* 2. TEKİL SİLME MODALI */}
+      {/* Single Product Delete Confirmation Dialog */}
       <AlertDialog
         open={!!singleProductToDelete}
         onOpenChange={(open) => !open && setSingleProductToDelete(null)}

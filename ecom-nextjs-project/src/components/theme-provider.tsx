@@ -7,10 +7,9 @@ export function ThemeProvider({
   children,
   ...props
 }: React.ComponentProps<typeof NextThemesProvider>) {
-  
-  // React 19 / Next.js 16.2+ script tag hatasını engellemek için:
-  // next-themes'e script etiketinin tipini 'application/json' (çalıştırılamayan/zararsız) 
-  // olarak sarmalamasını söylüyoruz. Böylece React 19 hata fırlatmayı kesiyor.
+
+
+  // Set the scriptProps to ensure that the theme is applied correctly on the client side
   const scriptProps = { type: "application/json" } as const;
 
   return (

@@ -36,7 +36,7 @@ export default async function AdminUsersPage() {
 
   return (
     <main className="w-full space-y-6 px-3 py-6 sm:px-6 sm:py-10">
-      {/* BAŞLIK VE ÖZET SAYAÇ */}
+      {/* Page Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-border/60 pb-4">
         <div className="space-y-1">
           <h1 className="text-2xl lg:text-3xl font-bold tracking-tight text-foreground">
@@ -75,13 +75,12 @@ export default async function AdminUsersPage() {
                 </TableRow>
               ) : (
                 users.map((u) => {
-                  // Kullanıcı Auth0 veya DB üzerinde admin mi kontrolü
                   const isAdminRole = u.role === "ADMIN" || u.email === process.env.ADMIN_EMAIL;
                   const isSelf = currentUser?.email === u.email;
 
                   return (
                     <TableRow key={u.id}>
-                      {/* Kullanıcı Bilgisi */}
+                      {/* User Information */}
                       <TableCell>
                         <div className="flex flex-col">
                           <span className="font-medium text-foreground flex items-center gap-1.5">
@@ -96,7 +95,7 @@ export default async function AdminUsersPage() {
                         </div>
                       </TableCell>
 
-                      {/* Rol */}
+                      {/* Role */}
                       <TableCell>
                         {isAdminRole ? (
                           <Badge className="bg-primary/10 text-primary border-primary/20 hover:bg-primary/20 flex w-fit items-center gap-1 font-bold">
@@ -111,7 +110,7 @@ export default async function AdminUsersPage() {
                         )}
                       </TableCell>
 
-                      {/* Durum */}
+                      {/* Status */}
                       <TableCell>
                         {u.isSuspended ? (
                           <Badge variant="destructive" className="flex w-fit items-center gap-1 font-bold">
@@ -126,14 +125,14 @@ export default async function AdminUsersPage() {
                         )}
                       </TableCell>
 
-                      {/* Kayıt Tarihi */}
+                      {/* Registration Date */}
                       <TableCell className="text-xs text-muted-foreground">
                         {u.createdAt ? new Date(u.createdAt).toLocaleDateString() : "N/A"}
                       </TableCell>
 
-                      {/* Aksiyonlar */}
+                      {/* Actions */}
                       <TableCell className="text-right">
-                        {/* Admin kendi hesabını veya diğer Adminleri askıya alamaz */}
+                        {/* Admin cannot suspend their own account or other admins */}
                         {!isAdminRole && !isSelf ? (
                           <UserSuspendButton
                             userId={u.id}

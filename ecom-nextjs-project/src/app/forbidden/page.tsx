@@ -1,11 +1,10 @@
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 
-
 export default function ForbiddenPage() {
   return (
     <div className="flex flex-col items-center justify-center min-h-[calc(100vh-8rem)] p-4 text-center">
-      {/* 403 HTTP Durum Kodu: Yasak / Yetkisiz Erişim */}
+      {/* 403 Forbidden */}
       <h1 className="text-4xl font-bold text-destructive mb-4 tracking-tighter">403 Forbidden</h1>
       <h2 className="text-xl font-bold tracking-tight mb-3">
         Access Denied

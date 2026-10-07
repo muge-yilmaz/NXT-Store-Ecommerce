@@ -2,7 +2,6 @@ import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { del } from "@vercel/blob";
-
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -12,7 +11,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { prisma } from "@/lib/prisma";
-import { deleteProduct } from "@/lib/products"; // Silme/arşivleme fonksiyonunu içeri aktarıyoruz
+import { deleteProduct } from "@/lib/products";
 
 type DeleteProductPageProps = {
   params: Promise<{ id: string }>;
@@ -27,7 +26,6 @@ export default async function DeleteProductPage({
   const resolvedParams = await params;
   const productId = resolvedParams.id;
 
-  // `getProductById` yerine doğrudan ham Prisma sorgusu atıyoruz
   const product = await prisma.product.findUnique({
     where: { id: productId },
   });
@@ -42,10 +40,9 @@ export default async function DeleteProductPage({
     "use server";
 
     try {
-      // Hem Stripe'ı arşivleyen hem de MongoDB'den silen fonksiyonumuzu çağırıyoruz
       await deleteProduct(productId);
 
-      // 2. Vercel Blob resimlerini temizle
+      // Delete images from Vercel Blob storage if there are any URLs
       if (urlsToDelete.length > 0) {
         await del(urlsToDelete);
       }

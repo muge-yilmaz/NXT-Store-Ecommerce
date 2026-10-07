@@ -1,34 +1,30 @@
 "use server";
 
-import { sendOrderCancelledEmail, sendOrderReceivedEmail, sendOrderShippedEmail } from "@/lib/email";
+import { sendOrderCancelledEmail, sendOrderShippedEmail } from "@/lib/email";
 import { prisma } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
 import { createNotification } from "@/lib/notifications";
 import { requireAdmin, requireUser } from "@/lib/auth0-utils";
 
-// 1. Siparişi Kargoya Verme
+
 export async function markOrderAsShippedAction(orderId: string) {
   try {
-    // ADMİN YETKİ KONTROLÜ
     await requireAdmin();
 
     const db = prisma as any;
 
-    // const updatedOrder değişkenine atıyoruz:
     const updatedOrder = await db.order.update({
       where: { id: orderId },
       data: {
         status: "SHIPPED",
-        shippedAt: new Date(),  // Kargolanma tarihi 
+        shippedAt: new Date(), 
       },
     });
 
-    // Kargoya Verildi E-Posta Bildirimi (KORUNDU)
     const targetEmail = (updatedOrder as any)?.userEmail;
     if (targetEmail){
       await sendOrderShippedEmail(targetEmail, (updatedOrder as any).id);
 
-      // ZİL İKONU BİLDİRİMİ (EKLENDİ)
       await createNotification({
         userId: targetEmail,
         title: "Order Shipped! 🚚",
@@ -47,30 +43,26 @@ export async function markOrderAsShippedAction(orderId: string) {
 }
 
 
-// 2. Siparişi Admin Olarak İptal Etme
 export async function adminCancelOrderAction(orderId: string) {
   try {
-    // ADMİN YETKİ KONTROLÜ
     await requireAdmin();
 
     const db = prisma as any;
 
-    // const updatedOrder değişkenine atıyoruz:
     const updatedOrder = await db.order.update({
       where: { id: orderId },
       data: {
         status: "CANCELLED",
         cancelledAt: new Date(),
-        cancelledBy: "ADMIN"    // Admin iptal etti olarak işaretliyoruz
+        cancelledBy: "ADMIN"
       }
     });
 
-    // Sipariş İptal Edildi E-Posta Bildirimi (KORUNDU)
+
     const targetEmail = (updatedOrder as any)?.userEmail;
     if (targetEmail){
       await sendOrderCancelledEmail(targetEmail, (updatedOrder as any).id, "ADMIN");
 
-      // ZİL İKONU BİLDİRİMİ (EKLENDİ)
       await createNotification({
         userId: targetEmail,
         title: "Order Cancelled ❌",
@@ -91,11 +83,9 @@ export async function adminCancelOrderAction(orderId: string) {
 
 export async function userCancelOrderAction(orderId: string) {
   try {
-    // KULLANICI YETKİ VE SAHİPLİK KONTROLÜ
     const user = await requireUser();
     const db = prisma as any;
 
-    // 1. Siparişi veritabanında USER tarafından iptal edildi olarak güncelle
     const updatedOrder = await db.order.update({
       where: { id: orderId },
       data: {
@@ -105,7 +95,6 @@ export async function userCancelOrderAction(orderId: string) {
       },
     });
 
-    // 2. ADMIN İÇİN ZİL İKONUNA BİLDİRİM DÜŞÜR (EKLENEN KISIM)
     await createNotification({
       userId: "ADMIN",
       title: "Order Cancelled by Customer ⚠️",
@@ -113,7 +102,6 @@ export async function userCancelOrderAction(orderId: string) {
       link: "/admin/orders",
     });
 
-    // 3. İsteğe bağlı E-posta bildirimi (Var olan e-posta fonksiyonun)
     if (updatedOrder.userEmail) {
       await sendOrderCancelledEmail(updatedOrder.userEmail, orderId, "USER");
     }

@@ -28,11 +28,10 @@ export function UserSuspendButton({ userId, isSuspended }: UserSuspendButtonProp
     <Button
       size="sm"
       variant={isSuspended ? "outline" : "destructive"}
-      className={`h-8 text-xs font-semibold ${
-        isSuspended 
-          ? "border-emerald-600/30 text-emerald-600 hover:bg-emerald-50 hover:text-emerald-700 dark:hover:bg-emerald-950/30" 
+      className={`h-8 text-xs font-semibold ${isSuspended
+          ? "border-emerald-600/30 text-emerald-600 hover:bg-emerald-50 hover:text-emerald-700 dark:hover:bg-emerald-950/30"
           : "text-white"
-      }`}
+        }`}
       onClick={handleToggle}
       disabled={loading}
     >

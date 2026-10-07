@@ -9,7 +9,6 @@ export function CartDropdown() {
   const [isOpen, setIsOpen] = useState(false);
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
 
-  // Sepetteki ürünleri kendi cart-store yapından yükleme
   const updateCartState = () => {
     const currentCart = getCart();
     setCartItems(currentCart);
@@ -17,25 +16,22 @@ export function CartDropdown() {
 
   useEffect(() => {
     updateCartState();
-    
-    // Sepete ürün eklendiğinde/çıkarıldığında anında güncelle
     window.addEventListener("cart-updated", updateCartState);
     return () => window.removeEventListener("cart-updated", updateCartState);
   }, []);
 
-  // Toplam Ürün Adedi
   const totalItemsCount = cartItems.reduce((acc, item) => acc + item.quantity, 0);
 
- return (
+  return (
     <div className="relative inline-block text-left">
-      {/* SEPET İKONU (Yenilenmiş Yarı Saydam & Mikro Animasyonlu Tasarım) */}
+      {/* Cart Button */}
       <button
         onClick={() => setIsOpen(!isOpen)}
         className="group relative flex size-9 items-center justify-center rounded-full border border-input bg-background hover:bg-accent hover:text-accent-foreground shadow-sm transition-all duration-200 cursor-pointer focus:outline-none focus:ring-2 focus:ring-ring"
       >
         <ShoppingBag className="size-4 text-foreground/80 transition-transform duration-300 group-hover:scale-110" />
 
-        {/* Sepet Boş Değilse Üstünde Şık Rozet Belirir */}
+        {/* Item Count Badge */}
         {totalItemsCount > 0 && (
           <span className="absolute -top-1.5 -right-1.5 bg-emerald-600 text-white text-[10px] font-black min-w-[20px] h-5 px-1 rounded-full flex items-center justify-center shadow-md ring-2 ring-background animate-in zoom-in-50 duration-200">
             {totalItemsCount}
@@ -43,18 +39,18 @@ export function CartDropdown() {
         )}
       </button>
 
-      {/* AÇILIR SEPET MENÜSÜ */}
+      {/* Cart Dropdown */}
       {isOpen && (
         <>
-          {/* Ekranın dışına tıklandığında kapanması için transparan katman */}
-          <div 
-            className="fixed inset-0 z-40 cursor-default" 
-            onClick={() => setIsOpen(false)} 
+          {/* Backdrop */}
+          <div
+            className="fixed inset-0 z-40 cursor-default"
+            onClick={() => setIsOpen(false)}
           />
 
           <div className="absolute right-0 mt-3 w-80 sm:w-96 rounded-3xl border border-border/80 bg-background/95 backdrop-blur-2xl p-5 shadow-2xl z-50 animate-in fade-in-50 slide-in-from-top-2 zoom-in-95 duration-200 space-y-4">
-            
-            {/* BAŞLIK VE KAPAT BUTONU */}
+
+            {/* Cart Header */}
             <div className="flex items-center justify-between border-b border-border/50 pb-3">
               <div className="flex items-center gap-2.5">
                 <div className="flex h-9 w-9 items-center justify-center rounded-2xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
@@ -70,7 +66,7 @@ export function CartDropdown() {
                 </div>
               </div>
 
-              <button 
+              <button
                 onClick={() => setIsOpen(false)}
                 className="rounded-xl p-1.5 text-muted-foreground hover:bg-accent hover:text-foreground transition-all duration-200 cursor-pointer"
               >
@@ -78,15 +74,15 @@ export function CartDropdown() {
               </button>
             </div>
 
-            {/* EKLENEN ÜRÜNLERİN LİSTELENDİĞİ CANLI ALAN */}
+            {/* Cart Items */}
             <div className="max-h-64 overflow-y-auto my-1 space-y-2 pr-1 custom-scrollbar">
               {cartItems.length > 0 ? (
                 cartItems.map((item) => (
-                  <div 
-                    key={item.stripePriceId} 
+                  <div
+                    key={item.stripePriceId}
                     className="p-3 rounded-2xl bg-muted/40 hover:bg-muted/70 border border-border/40 flex items-center justify-between gap-3 transition-all duration-200"
                   >
-                    {/* Ürün Detayları */}
+                    {/* Item Details */}
                     <div className="flex flex-col min-w-0 flex-1">
                       <p className="font-semibold text-xs text-foreground truncate leading-snug">
                         {item.name || "Product Item"}
@@ -97,12 +93,12 @@ export function CartDropdown() {
                         </span>
                       </div>
                     </div>
-                    
-                    {/* Tekil Ürün Silme Butonu (Mevcut CheckoutButton modunu kullanır) */}
+
+                    {/* Remove Item Button (Uses existing CheckoutButton mode) */}
                     <div className="shrink-0">
-                      <CheckoutButton 
-                        mode="remove-item" 
-                        productInfo={{ stripePriceId: item.stripePriceId, name: item.name || "Product" }} 
+                      <CheckoutButton
+                        mode="remove-item"
+                        productInfo={{ stripePriceId: item.stripePriceId, name: item.name || "Product" }}
                       />
                     </div>
                   </div>
@@ -119,7 +115,7 @@ export function CartDropdown() {
               )}
             </div>
 
-            {/* SEPET YÖNETİM VE BUTON ALANI */}
+            {/* Cart Management and Buttons */}
             {cartItems.length > 0 && (
               <div className="pt-2 border-t border-border/50">
                 <div className="flex items-center gap-2.5">

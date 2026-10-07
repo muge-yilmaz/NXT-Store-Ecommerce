@@ -60,8 +60,6 @@ export async function createProduct(
   _prevState: CreateProductState | null,
   formData: FormData,
 ): Promise<CreateProductState | null> {
-  // İLK SATIRDA ADMİN DOĞRULAMASI
-  // İsteği atan kullanıcı admin değilse işlem burada kesilir
   await requireAdmin();
 
 
@@ -90,33 +88,32 @@ export async function createProduct(
     };
   }
 
-  //Doğrudan put(...) yerine imageService fonksiyonunu kullanıyoruz
   const imageUrls = await uploadProductImagesService(imagesParsed.data);
 
   let productId: string;
   try {
-    // 1. Adım: Stripe üzerinde Ürünü (Product) oluşturuyoruz
+    // 1. Step: Create a Product in Stripe
     const stripeProduct = await stripe.products.create({
       name: parsed.data.name,
-      description: parsed.data.description|| undefined,
+      description: parsed.data.description || undefined,
       images: imageUrls.length > 0 ? [imageUrls[0]] : undefined,
     });
 
-    // 2. Adım: O ürüne bağlı Fiyatı (Price) oluşturuyoruz (Stripe kuruş/cent beklediği için 100 ile çarptık)
+    // 2. Step: Create a Price associated with the Product (Stripe expects amounts in cents)
     const stripePrice = await stripe.prices.create({
       product: stripeProduct.id,
-      // parsed.data.price yerine priceCents kullanıyoruz. Zod şemanız bunu zaten sayı (number) yaptığı için Number() sarmalına da gerek yok.
+      // Use priceCents instead of price. Your Zod schema already ensures this is a number.
       unit_amount: Math.round(parsed.data.priceCents),
-      currency: parsed.data.currency.toLocaleLowerCase(), // Stripe para birimini küçük harf bekler (usd, try vb.)
+      currency: parsed.data.currency.toLocaleLowerCase(), // Stripe expects currency in lowercase (usd, try, etc.)
     });
 
-    // 3. Adım: Hem doğrulanmış verileri hem resimleri hem de Stripe kimliklerini yerel fonksiyona paslıyoruz
+    // 3. Step: Pass the validated data, images, and Stripe identifiers to the local function
     const result = await createProductRecord({
       ...parsed.data,
       stripePriceId: stripePrice.id,
       stripeProductId: stripeProduct.id,
     },
-    imageUrls
+      imageUrls
     );
 
 

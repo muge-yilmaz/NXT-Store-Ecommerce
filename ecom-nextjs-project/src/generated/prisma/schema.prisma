@@ -34,10 +34,9 @@ model Product {
   @@map("products")
 }
 
-// Yeni ekleyeceğimiz User modeli (Profil bilgilerini tutmak için):
 model User {
   id          String   @id @default(auto()) @map("_id") @db.ObjectId
-  auth0Id     String   @unique // Auth0'dan gelen benzersiz kullanıcı ID'si
+  auth0Id     String   @unique
   email       String   @unique
   name        String?
   address     String?
@@ -45,8 +44,8 @@ model User {
   postalCode  String?
   country     String?
   phone       String?
-  role        String   @default("USER") // USER veya ADMIN
-  isSuspended Boolean  @default(false) // Askıya alınma durumu
+  role        String   @default("USER")
+  isSuspended Boolean  @default(false)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
@@ -58,11 +57,11 @@ model Order {
   stripeSessionId String?     @unique
   userId          String?     @db.ObjectId
   user            User?       @relation(fields: [userId], references: [id])
-  userEmail       String? // Email gönderme
+  userEmail       String?
   status          OrderStatus @default(PENDING)
-  cancelledBy     String? // "USER" veya "ADMIN" (İptal edeni takip etmek için)
-  shippedAt       DateTime? // Kargoya verilme tarihi
-  cancelledAt     DateTime? // İptal edilme tarihi
+  cancelledBy     String?
+  shippedAt       DateTime?
+  cancelledAt     DateTime?
   totalCents      Int
   currency        Currency    @default(EUR)
   items           OrderItem[]
@@ -89,7 +88,7 @@ model SupportTicket {
   orderId   String?
   subject   String
   message   String
-  status    String   @default("OPEN") // "OPEN" veya "RESOLVED"
+  status    String   @default("OPEN")
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -98,10 +97,10 @@ model SupportTicket {
 
 model Notification {
   id        String   @id @default(auto()) @map("_id") @db.ObjectId
-  userId    String // Bildirimin gideceği kullanıcının ID/Email'i veya Adminler için "ADMIN"
+  userId    String
   title     String
   message   String
-  link      String // Tıklayınca gidilecek yol (/admin/users, /admin/tickets, /user/orders vs.)
+  link      String
   isRead    Boolean  @default(false)
   createdAt DateTime @default(now())
 
@@ -109,11 +108,11 @@ model Notification {
 }
 
 enum OrderStatus {
-  PENDING // Sipariş Alındı / Beklemede
-  PAID // Ödendi / Hazırlanıyor
-  SHIPPED // Kargoda
-  CANCELLED // İptal Edildi
-  DELIVERED // Teslim Edildi
+  PENDING
+  PAID
+  SHIPPED
+  CANCELLED
+  DELIVERED
 }
 
 enum Currency {

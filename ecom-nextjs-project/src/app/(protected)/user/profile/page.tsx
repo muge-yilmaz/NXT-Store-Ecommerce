@@ -1,11 +1,7 @@
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { getSessionUser, isAdmin } from "@/lib/auth0-utils";
 import { prisma } from "@/lib/prisma";
 import Link from "next/link";
-import { updateUserAddress, updateUserProfile } from "./actions";
 import ProfileForm from "./profile-form";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -26,10 +22,10 @@ export default async function ProfilePage() {
     );
   }
 
-  // Kullanıcı ilk kez profiline girdiğinde MongoDB kaydı yoksa oluşturuyoruz (Upsert)
+  //Upsert user in MongoDB if not exists
   const dbUser = await prisma.user.upsert({
     where: { auth0Id: user.sub },
-    update: {},  // Kullanıcı varsa hiçbir verisini ezmiyoruz, sadece getiriyoruz
+    update: {},
     create: {
       auth0Id: user.sub,
       email: user.email || "",
@@ -38,17 +34,15 @@ export default async function ProfilePage() {
   });
 
 
-  // Kullanıcının admin olup olmadığını kontrol ediyoruz
   const userIsAdmin = isAdmin(user);
 
   return (
     <div className="container max-w-4xl mx-auto space-y-8 px-4 py-6 sm:px-6 sm:py-10 pb-12 md:pb-90 md:py-2 lg:pb-12">
-      {/* Geri Dönüş Butonu */}
       <Button variant="ghost" size="sm" asChild className="-ml-3 text-muted-foreground hover:text-foreground w-fit">
         <Link href="/">← Back to Home</Link>
       </Button>
 
-      {/* 1. BÖLÜM: ÜSTTEKİ ŞIK PROFİL ÖZETİ (KART) */}
+      {/* Card Section */}
       <div className="flex flex-col sm:flex-row items-center gap-4 p-4 sm:p-6 border border-border/80 rounded-2xl bg-gradient-to-r from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-950 shadow-sm">
         <Avatar className="h-20 w-20 border-2 border-primary shrink-0">
           <AvatarImage src={(user.picture as string) || ""} alt={dbUser.name || "User"} />
@@ -61,7 +55,7 @@ export default async function ProfilePage() {
           <div className="flex flex-col sm:flex-row sm:items-center justify-center sm:justify-start gap-2">
             <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-foreground truncate">{dbUser.name}</h1>
 
-            {/* Rolüne göre şık bir rozet (Badge) gösteriyoruz */}
+            {/* Role Badge */}
             <div className="mx-auto sm:mx-0 shrink-0">
               {userIsAdmin ? (
                 <Badge variant="default" className="bg-red-600 hover:bg-red-700 text-white">
@@ -76,7 +70,7 @@ export default async function ProfilePage() {
           <p className="text-xs sm:text-sm text-muted-foreground truncate">{dbUser.email}</p>
         </div>
 
-        {/* Admin ise doğrudan yönetim paneline gidebileceği hızlı bir buton */}
+        {/* Admin Dashboard Button */}
         {userIsAdmin && (
           <Button asChild variant="outline" size="sm" className="w-full sm:w-auto shrink-0">
             <Link href="/admin">Admin Dashboard</Link>
@@ -86,7 +80,7 @@ export default async function ProfilePage() {
 
       <hr className="border-border/60" />
 
-      {/* 2. BÖLÜM: ALTTAKİ DÜZENLEME AYARLARI VE FORMLAR */}
+      {/* Form Section */}
       <div className="space-y-4">
         <div className="space-y-1">
           <h2 className="text-lg sm:text-xl font-semibold tracking-tight text-foreground">Account Settings</h2>
@@ -95,7 +89,7 @@ export default async function ProfilePage() {
           </p>
         </div>
 
-        {/* Formu buraya çağırıp veritabanı bilgilerini teslim ediyoruz */}
+        {/* Profile Form */}
         <ProfileForm dbUser={dbUser} />
       </div>
     </div>

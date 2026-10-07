@@ -28,11 +28,11 @@ export function NotificationDropdown({ userIsAdmin }: { userIsAdmin: boolean }) 
 
   useEffect(() => {
     fetchNotifications();
-    const interval = setInterval(fetchNotifications, 10000); // 10 sn'de bir canlı güncelleme
+    const interval = setInterval(fetchNotifications, 10000);
     return () => clearInterval(interval);
   }, []);
 
-  // Bildirime tıklanınca: Okundu yap, kırmızılığı kaldır ve ilgili sayfaya git
+  // When a notification is clicked, mark it as read and navigate to the appropriate link
   const handleNotificationClick = async (n: any) => {
     if (!n.isRead) {
       await markNotificationAsReadAction(n.id);
@@ -40,8 +40,8 @@ export function NotificationDropdown({ userIsAdmin }: { userIsAdmin: boolean }) 
         prev.map((item) => (item.id === n.id ? { ...item, isRead: true } : item))
       );
     }
-    // KONTROL VE YÖNLENDİRME DÜZELTMESİ:
-    // Eğer link "/profile" ise (404 vermemesi için) veya bildirim başlığında "Suspended" geçiyorsa doğrudan /support'a yönlendir.
+    // CONTROL AND REDIRECTION FIX:
+    // If the link is "/profile" (to avoid 404 errors) or the notification title contains "Suspended", redirect directly to /support.
     if (n.link === "/profile" || n.title?.includes("Suspended")) {
       router.push("/support");
     } else if (n.link) {
@@ -51,7 +51,6 @@ export function NotificationDropdown({ userIsAdmin }: { userIsAdmin: boolean }) 
     }
   };
 
-  // Bildirimi Sil
   const handleDelete = async (id: string, e: React.MouseEvent) => {
     e.stopPropagation();
     await deleteNotificationAction(id);
@@ -98,11 +97,10 @@ export function NotificationDropdown({ userIsAdmin }: { userIsAdmin: boolean }) 
               <div
                 key={n.id}
                 onClick={() => handleNotificationClick(n)}
-                className={`p-3 rounded-xl border transition-all cursor-pointer flex items-start justify-between gap-3 group ${
-                  n.isRead
+                className={`p-3 rounded-xl border transition-all cursor-pointer flex items-start justify-between gap-3 group ${n.isRead
                     ? "bg-background/50 border-border/40 opacity-70"
                     : "bg-muted/60 border-primary/20 hover:bg-muted font-medium"
-                }`}
+                  }`}
               >
                 <div className="flex-1 min-w-0 space-y-1">
                   <div className="flex items-center gap-1.5">

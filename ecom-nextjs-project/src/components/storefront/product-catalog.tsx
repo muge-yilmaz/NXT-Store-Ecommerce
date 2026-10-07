@@ -1,5 +1,4 @@
 import { Suspense } from "react";
-
 import { ProductFilters } from "./product-filters";
 import { ProductGrid, ProductGridSkeleton } from "./product-grid";
 import { parseStorefrontFilters } from "../../lib/products";

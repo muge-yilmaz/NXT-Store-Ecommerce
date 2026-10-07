@@ -17,14 +17,14 @@ export async function handleEditAction(formData: FormData) {
   const description = formData.get("description") as string;
   const priceCents = parseInt(formData.get("priceCents") as string) || 0;
   const stock = parseInt(formData.get("stock") as string) || 0;
-  
+
   const rawCategory = formData.get("category") as string;
   const category = rawCategory as ProductCategory;
 
   const isActive = formData.get("isActive") === "true";
   const imageFiles = formData.getAll("images") as File[];
 
-  // Silinmek istenen resimleri filtreleme
+  // Remove images that are marked for deletion and add new uploaded images
   const removeImages = formData.getAll("removeImages") as string[];
   let finalImageUrls = [...currentImageUrls].filter(url => !removeImages.includes(url));
 

@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-
 import { CreateProductForm } from "./create-product-form";
 import { CreateProductSuccess } from "./create-product-success";
 

@@ -2,7 +2,7 @@ import { render, fireEvent, screen } from '@testing-library/react';
 import ErrorPage from '../app/error';
 
 beforeEach(() => {
-  jest.spyOn(console, 'error').mockImplementation(() => {});
+  jest.spyOn(console, 'error').mockImplementation(() => { });
 });
 
 const mockError = {

@@ -1,6 +1,6 @@
 import '@testing-library/jest-dom';
 
-// Global fetch tanımı (Node.js/Jest ortamı için)
+// Global fetch mock for Jest tests
 global.fetch = jest.fn(() =>
   Promise.resolve({
     json: () => Promise.resolve({}),

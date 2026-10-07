@@ -1,6 +1,5 @@
 import Link from "next/link";
-import { notFound} from "next/navigation";
-
+import { notFound } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -26,7 +25,6 @@ export default async function EditProductPage({ params }: EditProductPageProps) 
     notFound();
   }
 
-  // Veritabanındaki kategorinin selectbox'ta doğru seçili gelmesi için küçük harfe zorluyoruz
   const currentCategory = product.category ? product.category.toLowerCase() : "electronics";
 
   return (
@@ -46,7 +44,7 @@ export default async function EditProductPage({ params }: EditProductPageProps) 
         <CardContent>
           <form action={handleEditAction} encType="multipart/form-data" className="space-y-4">
 
-          <input type="hidden" name="productId" value={productId} />
+            <input type="hidden" name="productId" value={productId} />
             {product.imageUrls?.map((url, i) => (
               <input key={i} type="hidden" name="currentImageUrls" value={url} />
             ))}
@@ -75,9 +73,8 @@ export default async function EditProductPage({ params }: EditProductPageProps) 
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <label className="text-sm font-medium">Category</label>
-                {/* Option value değerlerini hem küçük hem büyük ihtimalini kapsayacak şekilde güncelledik */}
-                <select 
-                  name="category" 
+                <select
+                  name="category"
                   defaultValue={product.category}
                   className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background"
                 >
@@ -113,9 +110,9 @@ export default async function EditProductPage({ params }: EditProductPageProps) 
                 <div className="flex gap-2 overflow-x-auto p-2 bg-muted/50 rounded-lg">
                   {product.imageUrls.map((url, index) => (
                     <div key={index} className="flex items-center gap-2 border p-2 rounded bg-background">
-                      <img 
-                        src={url} 
-                        alt="product" 
+                      <img
+                        src={url}
+                        alt="product"
                         className="w-12 h-12 object-cover rounded border"
                       />
                       <label className="flex items-center gap-1.5 text-xs text-destructive cursor-pointer select-none">

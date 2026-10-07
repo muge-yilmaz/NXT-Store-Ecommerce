@@ -6,8 +6,6 @@ import { revalidatePath } from "next/cache";
 
 export async function cancelOrderAction(orderId: string) {
   try {
-    // OTURUM VE KULLANICI DOĞRULAMA (requireUser)
-    // Giriş yapılmamışsa bu satır hata fırlatır veya işlemi durdurur
     const user = await requireUser();
     const db = prisma as any;
 
@@ -15,7 +13,6 @@ export async function cancelOrderAction(orderId: string) {
       return { success: false, error: "Database client error." };
     }
 
-    // 1. Siparişi bul
     const order = await db.order.findUnique({
       where: { id: orderId },
     });
@@ -24,9 +21,7 @@ export async function cancelOrderAction(orderId: string) {
       return { success: false, error: "Order not found." };
     }
 
-    // SAHİPLİK KONTROLÜ (VERIFY ORDER OWNERSHIP)
-    // Giriş yapan kullanıcının ID'si ile siparişin sahibi eşleşiyor mu?
-    // 3. Esnek ve Güvenli Sahiplik Kontrolü (Ownership Check)
+    // VERIFY ORDER OWNERSHIP
     const currentUserId = user.sub || user.id;
     const currentUserEmail = user.email;
 
@@ -47,7 +42,7 @@ export async function cancelOrderAction(orderId: string) {
       };
     }
 
-    // 2. Kargo kontrolü: Kargoya verildiyse kullanıcı iptal edemez
+    // 2. Check if the order is already shipped or delivered
     if (order.status === "SHIPPED" || order.status === "DELIVERED") {
       return {
         success: false,
@@ -55,7 +50,6 @@ export async function cancelOrderAction(orderId: string) {
       };
     }
 
-    // 3. İptal işlemini gerçekleştir
     await db.order.update({
       where: { id: orderId },
       data: {
@@ -65,7 +59,6 @@ export async function cancelOrderAction(orderId: string) {
       },
     });
 
-    // Sayfayı anında yenile ki yeni durum ekrana yansısın
     revalidatePath("/user/orders");
 
     return { success: true };

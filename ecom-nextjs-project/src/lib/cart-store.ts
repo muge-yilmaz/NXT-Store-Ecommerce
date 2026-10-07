@@ -1,15 +1,14 @@
 export type CartItem = {
   stripePriceId: string;
   quantity: number;
-  name?: string; // Görsel kolaylık için
+  name?: string;
 };
 
 
-// Aktif oturum açan kullanıcının sepet key'ini dinamik belirler
+// If the user is logged in, we can use their email or user ID to create a unique cart key. If not, we can use a generic "guest" key.
 const getCartKey = (): string => {
   if (typeof window === "undefined") return "shopping-cart-guest";
-  
-  // Auth0 veya session'dan saklanan aktif kullanıcı ID/email bilgisini alıyoruz
+
   const activeUser = localStorage.getItem("current_user_email") || "guest";
   return `shopping-cart_${activeUser}`;
 };
@@ -35,7 +34,7 @@ export const addToCart = (item: CartItem) => {
 
   const cartKey = getCartKey();
   localStorage.setItem(cartKey, JSON.stringify(cart));
-  // Sayfadaki sepet sayılarının güncellenmesi için event tetikliyoruz
+  // Dispatch a custom event to notify other components that the cart has been updated
   window.dispatchEvent(new Event("cart-updated"));
 };
 
@@ -46,12 +45,12 @@ export const clearCart = () => {
   window.dispatchEvent(new Event("cart-updated"));
 };
 
-// Sepetten sadece seçilen ürünü silen/adet azaltan fonksiyon
+
 export const removeFromCart = (stripePriceId: string) => {
   if (typeof window === "undefined") return;
   let cart = getCart();
   const existingItem = cart.find((item) => item.stripePriceId === stripePriceId);
- 
+
   if (existingItem) {
     if (existingItem.quantity > 1) {
       existingItem.quantity -= 1;

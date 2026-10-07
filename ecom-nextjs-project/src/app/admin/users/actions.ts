@@ -5,11 +5,10 @@ import { revalidatePath } from "next/cache";
 import { createNotification } from "@/lib/notifications";
 import { requireAdmin } from "@/lib/auth0-utils";
 
-// Kullanıcıyı askıya alma veya askıdan çıkarma
+// Suspend or unsuspend a user account
 export async function toggleUserSuspensionAction(userId: string, suspend: boolean) {
-  
+
   try {
-    // Admin güvenlik kontrolü
     await requireAdmin();
 
     const db = prisma as any;
@@ -18,7 +17,7 @@ export async function toggleUserSuspensionAction(userId: string, suspend: boolea
       return { success: false, error: "User model not found." };
     }
 
-    // Eğer suspend parametresi açıkça gönderilmediyse mevcut durumun tersini alıyoruz
+    // If suspend is undefined, toggle the current suspension state
     let nextSuspendState = suspend;
     if (nextSuspendState === undefined) {
       const currentUser = await db.user.findUnique({
@@ -35,7 +34,7 @@ export async function toggleUserSuspensionAction(userId: string, suspend: boolea
       },
     });
 
-    // Kullanıcı askıya alındığında / kaldırıldığında bildirim gönderilebilir
+    // Send a notification to the user about the suspension status change
     if (updatedUser?.email) {
       await createNotification({
         userId: updatedUser.email,
@@ -43,7 +42,7 @@ export async function toggleUserSuspensionAction(userId: string, suspend: boolea
         message: nextSuspendState
           ? "Your account has been suspended by an administrator."
           : "Your account suspension has been lifted.",
-        link: "/support", // Kullanıcıyı destek sayfasına yönlendirebilirsiniz
+        link: "/support",
       });
     }
 

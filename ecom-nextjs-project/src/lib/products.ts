@@ -1,5 +1,5 @@
 import type { Product as PrismaProduct } from "@/generated/prisma";
-
+import { stripe } from "@/lib/stripe";
 import { parseStorefrontFiltersFromSearchParams } from "@/lib/validation";
 import type { CreateProductData } from "@/lib/validation/product";
 import { prisma } from "@/lib/prisma";
@@ -20,8 +20,8 @@ export type Product = {
   stock: number;
   imageUrls: string[];
   isActive: boolean;
-  stripeProductId?: string | null; // Stripe Ürün ID alanı eklendi
-  stripePriceId?: string | null;   // Stripe Fiyat ID alanı eklendi
+  stripeProductId?: string | null;
+  stripePriceId?: string | null;
   createdAt: Date;
   updatedAt: Date;
 };
@@ -40,7 +40,7 @@ function toProduct(record: PrismaProduct): Product {
   }
 
 
-  // record içerisinden gelen stripe alanlarını güvenle eşleştiriyoruz.
+  // Safely cast the record to Product type, ensuring that the currency and category are valid
   return {
     id: record.id,
     name: record.name,
@@ -51,7 +51,7 @@ function toProduct(record: PrismaProduct): Product {
     stock: record.stock,
     imageUrls: record.imageUrls,
     isActive: record.isActive,
-    stripeProductId: (record as any).stripeProductId ?? null, 
+    stripeProductId: (record as any).stripeProductId ?? null,
     stripePriceId: (record as any).stripePriceId ?? null,
     createdAt: record.createdAt,
     updatedAt: record.updatedAt,
@@ -72,7 +72,7 @@ export async function getStorefrontProducts(
       whereCondition.category = category;
     }
 
-    // TypeScript hatasını önlemek için (sort as string) kullanıyoruz
+    // Default sorting is by creation date descending (newest first)
     let orderByCondition: any = { createdAt: "desc" };
     const sortStr = sort as string | undefined;
 
@@ -103,7 +103,7 @@ export async function getAllProducts(): Promise<Product[]> {
     // 1. enum in prisma has EUR, USD, TRY and we have EUR, GBP, TRY in our code
     // 2. we need to check that the currency and category values are compatible with our TS enums so toProduct() function does that
     const records = await prisma.product.findMany({
-      orderBy: { createdAt: "desc" }, // en son eklenen ürünler en üstte olacak şekilde sıralama
+      orderBy: { createdAt: "desc" },
     });
     // The line below is the same as
     // return records.map((record) => toProduct(record));
@@ -128,7 +128,6 @@ export async function getProductById(id: string): Promise<Product | null> {
 }
 
 
-// createProduct fonksiyonunu dışarıdan gelen Stripe ID'lerini kabul edecek şekilde genişlettik
 export async function createProduct(
   data: CreateProductData & { stripeProductId: string; stripePriceId: string },
   imageUrls: string[],
@@ -144,7 +143,7 @@ export async function createProduct(
   return toProduct(record);
 }
 
-// Eksik olan Güncelleme fonksiyonunu buraya ekliyoruz
+
 export async function updateProduct(
   id: string,
   data: Partial<CreateProductData> & { imageUrls?: string[]; isActive?: boolean }
@@ -152,7 +151,6 @@ export async function updateProduct(
 
   const { currency, category, ...rest } = data;
 
-// 1. Önce MongoDB'deki mevcut ürünü bul
   const existingProduct = await prisma.product.findUnique({
     where: { id },
   });
@@ -161,16 +159,15 @@ export async function updateProduct(
     throw new Error(`Product with id ${id} not found.`);
   }
 
-  // Stripe'ı güncellerken kullanacağımız olası yeni ID'ler
   let newStripePriceId = existingProduct.stripePriceId;
   let newStripeProductId = existingProduct.stripeProductId;
 
-  // 2. STRIPE SENKRONİZASYONU
+  // Stripe Sync if the product has a Stripe Product ID
   if (existingProduct.stripeProductId) {
     try {
       const stripeProductUpdateData: any = {};
-      
-      // İsim, açıklama veya aktiflik değiştiyse Stripe Ürününü güncelle
+
+      // Update the Stripe product only if the name, description, or isActive status has changed
       if (rest.name && rest.name !== existingProduct.name) {
         stripeProductUpdateData.name = rest.name;
       }
@@ -185,34 +182,34 @@ export async function updateProduct(
         await stripe.products.update(existingProduct.stripeProductId, stripeProductUpdateData);
       }
 
-      // 3. FİYAT DEĞİŞTİYSE YENİ STRIPE PRICE OLUŞTUR VE ESKİSİNİ ARŞİVLE
+      // If the price has changed, we need to create a new Stripe Price and deactivate the old one
       if (rest.priceCents && rest.priceCents !== existingProduct.priceCents) {
-        // Eski fiyatı arşivle
+        // Deactivate the old price if it exists
         if (existingProduct.stripePriceId) {
           await stripe.prices.update(existingProduct.stripePriceId, { active: false });
         }
-        
-        // Yeni fiyat oluştur
+
+        // Create a new price for the product
         const newPrice = await stripe.prices.create({
           product: existingProduct.stripeProductId,
           unit_amount: rest.priceCents,
           currency: (currency || existingProduct.currency).toLowerCase(),
         });
-        
-        newStripePriceId = newPrice.id; // DB'ye kaydedilecek yeni Price ID
+
+        newStripePriceId = newPrice.id;
       }
     } catch (stripeError) {
       console.error(`Stripe update failed for product ${id}:`, stripeError);
-      throw new Error("Failed to sync product updates with Stripe."); // Stripe başarısızsa işlemi durdur
+      throw new Error("Failed to sync product updates with Stripe.");
     }
   }
 
-  // 4. MONGODB GÜNCELLEMESİ (Stripe Price güncellenmişse DB'ye yazılır)
+
   const record = await prisma.product.update({
     where: { id },
     data: {
       ...rest,
-      stripePriceId: newStripePriceId, // Yeni fiyat ID'sini yazıyoruz
+      stripePriceId: newStripePriceId,
       ...(currency && { currency: currency as Currency }),
       ...(category && { category: category as ProductCategory }),
     },
@@ -227,27 +224,21 @@ export function parseStorefrontFilters(
   const { category, sort } =
     parseStorefrontFiltersFromSearchParams(searchParams);
 
-  return { 
-  categoryValue: category as ProductCategory | "all", 
-  sortValue: sort as ProductSort 
-};
+  return {
+    categoryValue: category as ProductCategory | "all",
+    sortValue: sort as ProductSort
+  };
 }
 
-// Ürün MongoDB'den silinmeden hemen önce Stripe tarafında arşivleniyor (active: false)
-import { stripe } from "@/lib/stripe";
 
-
-
-// delete products (Hataları Yutmayan Güvenli Hali)
 export async function deleteProduct(id: string): Promise<void> {
-  // 1. Ürünü DB'den bul
-  const product = await prisma.product.findUnique({ 
-    where: { id } 
+  const product = await prisma.product.findUnique({
+    where: { id }
   });
-  
-  if (!product) return; // Zaten yoksa çık
 
-  // 2. STRIPE ARŞİVLEME KONTROLÜ
+  if (!product) return;
+
+  // Step 1: Check if the product has a Stripe Product ID or Price ID
   try {
     if (product.stripePriceId) {
       await stripe.prices.update(product.stripePriceId, { active: false });
@@ -256,13 +247,11 @@ export async function deleteProduct(id: string): Promise<void> {
       await stripe.products.update(product.stripeProductId, { active: false });
     }
   } catch (stripeError) {
-    // İnceleyicinin uyarısı: Hataları YUTMA. Eğer Stripe'ta arşivleme patlarsa
-    // MongoDB silme işlemine GEÇME, hatayı dışarı fırlat!
     console.error(`Stripe archiving failed for product ${id}. Aborting DB deletion.`, stripeError);
     throw new Error(`Cannot delete product ${id} because Stripe archiving failed.`);
   }
 
-  // 3. SADECE STRIPE BAŞARILIYSA MONGODB'DEN SİL
+  // Step 2: Only delete from MongoDB if Stripe archiving is successful
   await prisma.product.delete({
     where: { id },
   });
@@ -274,7 +263,6 @@ export async function deleteMultipleProducts(ids: string[]): Promise<void> {
 
   for (const id of ids) {
     try {
-      // Mevcut Stripe arşivleme ve DB silme mantığını her ürün için sırayla çağırır
       await deleteProduct(id);
     } catch (error) {
       console.error(`Failed to delete product with id ${id} during bulk delete:`, error);
@@ -282,7 +270,6 @@ export async function deleteMultipleProducts(ids: string[]): Promise<void> {
     }
   }
 
-// Eğer bazı ürünler silinemezse (örneğin Stripe hatası yüzünden) süreci bildir
   if (failedIds.length > 0) {
     throw new Error(`Failed to delete some products: ${failedIds.join(', ')}`);
   }

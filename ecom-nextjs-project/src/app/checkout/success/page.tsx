@@ -10,8 +10,8 @@ import {
 } from "@/components/ui/card";
 import { prisma } from "@/lib/prisma";
 import { stripe } from "@/lib/stripe";
-import { getSessionUser } from "@/lib/auth0-utils"; // Kullanıcı e-postasını almak için
-import { sendOrderReceivedEmail } from "@/lib/email";  // Resend e-posta fonksiyonu
+import { getSessionUser } from "@/lib/auth0-utils";
+import { sendOrderReceivedEmail } from "@/lib/email";
 import { createNotification } from "@/lib/notifications";
 import { ClearCartOnSuccess } from "@/components/storefront/clear-cart-on-success";
 
@@ -29,7 +29,6 @@ export default async function CheckoutSuccessPage({
   const { session_id } = await searchParams;
   const user = await getSessionUser();
 
-// Stripe Session üzerinden veritabanında sipariş oluşturma
   if (session_id) {
     try {
       const session = await stripe.checkout.sessions.retrieve(session_id, {
@@ -40,7 +39,7 @@ export default async function CheckoutSuccessPage({
         const db = prisma as any;
 
         if (db.order) {
-          // 1. MÜKERRER SİPARİŞ KONTROLÜ (Çift kaydı engeller)
+          // Check if an order with this Stripe session ID already exists
           const existingOrder = await db.order.findUnique({
             where: { stripeSessionId: session.id },
           });
@@ -50,7 +49,7 @@ export default async function CheckoutSuccessPage({
             const recipientEmail =
               user?.email || session.customer_details?.email || null;
 
-            // 2. YENİ SİPARİŞ OLUŞTUR
+            // Create a new order in the database
             const createdOrder = await db.order.create({
               data: {
                 stripeSessionId: session.id,
@@ -62,12 +61,12 @@ export default async function CheckoutSuccessPage({
               },
             });
 
-            // 3. STRIPE'TAN GELEN GERÇEK ÜRÜNLERİ EŞLEŞTİR VE EKLE
+            // Create order items in the database
             if (db.orderItem) {
               for (const item of lineItems) {
                 const stripePriceId = item.price?.id;
 
-                // Veritabanında bu Stripe Price ID'ye sahip GERÇEK ürünü bul
+                // Try to find a matching product in the database using the Stripe Price ID
                 let matchingProduct = null;
                 if (stripePriceId && db.product) {
                   matchingProduct = await db.product.findFirst({
@@ -75,7 +74,7 @@ export default async function CheckoutSuccessPage({
                   });
                 }
 
-                // Eğer Stripe Price ID eşleşmezse son çare herhangi bir aktif ürün al
+                // If no matching product is found, fallback to the first product in the database (for testing purposes)
                 if (!matchingProduct && db.product) {
                   matchingProduct = await db.product.findFirst();
                 }
@@ -93,7 +92,7 @@ export default async function CheckoutSuccessPage({
               }
             }
 
-            // 4. E-POSTA VE ZİL BİLDİRİMLERİ
+            // Send order confirmation email and notifications
             if (recipientEmail) {
               const formattedTotal =
                 (session.currency?.toUpperCase() || "EUR") +
@@ -106,7 +105,7 @@ export default async function CheckoutSuccessPage({
                 formattedTotal
               );
 
-              // Müşteri için bildirim
+              // Notification for the user
               await createNotification({
                 userId: recipientEmail,
                 title: "Order Placed Successfully! 🎉",
@@ -115,7 +114,7 @@ export default async function CheckoutSuccessPage({
               });
             }
 
-            // Admin için bildirim
+            // Notification for the admin
             await createNotification({
               userId: "ADMIN",
               title: "New Order Received 🛒",
@@ -132,12 +131,12 @@ export default async function CheckoutSuccessPage({
 
   return (
     <main className="container max-w-xl mx-auto min-h-[70vh] flex items-center justify-center p-4 py-12">
-      {/* Ödeme Başarılı Olduğu İçin Sepet Yalnızca Burada Temizlenir */}
+      {/* Clear the shopping cart on successful checkout  */}
       <ClearCartOnSuccess />
 
       <Card className="w-full text-center border-emerald-500/30 shadow-xl bg-card">
         <CardHeader className="space-y-4 pb-4 pt-8">
-          {/* Yeşil Başarı İkonu */}
+          {/* Success Icon */}
           <div className="mx-auto size-20 rounded-full bg-emerald-100 dark:bg-emerald-950/60 flex items-center justify-center text-emerald-600 dark:text-emerald-400 animate-in zoom-in-50 duration-300">
             <CheckCircle2 className="size-12" />
           </div>

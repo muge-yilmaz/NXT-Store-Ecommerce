@@ -1,6 +1,6 @@
-// A: Yönetici Token'ı Almak (getManagementToken)
+// A: getManagementToken
 async function getManagementToken() {
-  // Auth0 Domain, M2M Client ID ve Client Secret bilgilerini .env dosyasından okuyoruz
+
   const domain = process.env.AUTH0_DOMAIN;
   const clientId = process.env.AUTH0_MANAGEMENT_CLIENT_ID;
   const clientSecret = process.env.AUTH0_MANAGEMENT_CLIENT_SECRET;
@@ -10,7 +10,7 @@ async function getManagementToken() {
   }
 
 
-  // 1. Auth0'ın Token üretme servisine POST isteği atıyoruz.
+  // 1. Auth0 Management fetch for getting a temporary access token (M2M)
   const response = await fetch(`https://${domain}/oauth/token`, {
     method: "POST",
     headers: { "content-type": "application/json" },
@@ -27,24 +27,24 @@ async function getManagementToken() {
   if (!response.ok) {
     throw new Error(`Auth0 Token Error: ${data.error_description || data.error}`);
   }
-  return data.access_token;   // 2. Bize dönen geçici şifreyi (access_token) teslim alıyoruz.
+  return data.access_token;   // 2. Return the access token to be used in the next request to update the user profile
 }
 
 
-// B: Kullanıcıyı Güncellemek (updateAuth0UserProfile)
-// 1. Aşağıdaki fonksiyon, Auth0'daki kullanıcıyı güncellemek için kullanılır. Bu fonksiyondan Giriş Kartımızı alıyoruz:
-export async function updateAuth0UserProfile(userId: string, updatedData: { name?: string; email?: string}) {
+// B: updateAuth0UserProfile
+// 1. This function updates the user's profile in Auth0 using the Management API. It requires a valid access token obtained from getManagementToken.
+export async function updateAuth0UserProfile(userId: string, updatedData: { name?: string; email?: string }) {
   const domain = process.env.AUTH0_DOMAIN;
   const token = await getManagementToken();
 
-  // 2. Auth0 dökümantasyonundaki adrese (https://domain/api/v2/users/USER_ID) PATCH isteği atıyoruz:
+  // 2. Make a PATCH request to the Auth0 Management API to update the user's profile
   const response = await fetch(`https://${domain}/api/v2/users/${encodeURIComponent(userId)}`, {
     method: "PATCH",
     headers: {
-      Authorization: `Bearer ${token}`,    // Giriş kartımızı buraya ekliyoruz
+      Authorization: `Bearer ${token}`,    // 3. Use the access token in the Authorization header
       "Content-Type": "application/json",
     },
-    body: JSON.stringify(updatedData),   // 3. Değişecek veriyi (yani yeni ismi) paketleyip gönderiyoruz:
+    body: JSON.stringify(updatedData),   // 4. Send the updated data (name and/or email) in the request body
   });
 
   const data = await response.json();

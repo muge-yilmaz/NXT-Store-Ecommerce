@@ -5,11 +5,9 @@ import { clearCart } from "@/lib/cart-store";
 
 export function LogoutButton() {
   const handleLogout = () => {
-    // 1. Kullanıcı çıkış yaparken yerel sepeti tamamen sıfırla
+    // Delete the cart from local storage
     clearCart();
     window.dispatchEvent(new Event("cart-updated"));
-
-    // 2. Auth0 çıkış bağlantısına yönlendir
     window.location.href = "/auth/logout";
   };
 

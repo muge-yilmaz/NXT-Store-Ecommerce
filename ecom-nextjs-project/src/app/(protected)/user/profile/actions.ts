@@ -1,13 +1,11 @@
 'use server';
 
-import { getSessionUser, requireUser } from "@/lib/auth0-utils";
+import { requireUser } from "@/lib/auth0-utils";
 import { updateAuth0UserProfile } from "@/lib/auth0Management";
-import { prisma } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { updateUserProfileService, updateUserAddressService } from "@/services/userService";
 
-// Zod şemaları ile form verilerini doğrulamak için kullanıyoruz
 const profileSchema = z.object({
   name: z.string().trim().min(2, "Name must be at least 2 characters long"),
   email: z.string().trim().email("Please enter a valid email address."),
@@ -23,11 +21,8 @@ const addressSchema = z.object({
 });
 
 
-
-// 1. Hesap Bilgilerini (İsim ve E-posta) Hem Auth0'da Hem MongoDB'de Güncelleme Action'ı
 export async function updateUserProfile(formdata: FormData) {
 
-  // Standart Yetki Kontrolü
   const user = await requireUser();
 
   const userId = user?.sub || (user as any)?.id;
@@ -36,23 +31,23 @@ export async function updateUserProfile(formdata: FormData) {
     throw new Error("User ID is missing");
   }
 
- const rawData = {
-  name : formdata.get("name"),
-  email : formdata.get("email"),
-};
+  const rawData = {
+    name: formdata.get("name"),
+    email: formdata.get("email"),
+  };
 
-const validatedData = profileSchema.parse(rawData); 
+  const validatedData = profileSchema.parse(rawData);
 
   try {
-    // A. Önce Auth0 tarafındaki bilgileri (isim ve mail) güncelliyoruz
-    await updateAuth0UserProfile(userId, { 
+    // first update Auth0 profile, then update MongoDB profile
+    await updateAuth0UserProfile(userId, {
       name: validatedData.name,
       email: validatedData.email
     });
-    
-    await updateUserProfileService(userId, validatedData); // B. MongoDB tarafında da güncelleme yapıyoruz
 
-    revalidatePath("/user/profile"); // Sayfayı yenilemek için revalidatePath kullanıyoruz
+    await updateUserProfileService(userId, validatedData); // Later, we can also update the MongoDB profile if needed
+
+    revalidatePath("/user/profile");
   } catch (error) {
     console.error("Error updating user profile:", error);
     throw new Error("Failed to update user profile");
@@ -60,10 +55,7 @@ const validatedData = profileSchema.parse(rawData);
 }
 
 
-// 2. Adres Bilgilerini Sadece MongoDB'de Güncelleme Action'ı
 export async function updateUserAddress(formdata: FormData) {
-
-  // 🌟 Standart Yetki Kontrolü
   const user = await requireUser();
 
   const userId = user?.sub || (user as any)?.id;
@@ -85,11 +77,11 @@ export async function updateUserAddress(formdata: FormData) {
 
   try {
     await updateUserAddressService(userId, {
-        address: validatedData.address,
-        city: validatedData.city || "",
-        postalCode: validatedData.postalCode || "",
-        country: validatedData.country || "",
-        phone: validatedData.phone || "",
+      address: validatedData.address,
+      city: validatedData.city || "",
+      postalCode: validatedData.postalCode || "",
+      country: validatedData.country || "",
+      phone: validatedData.phone || "",
     });
 
     revalidatePath("/user/profile");

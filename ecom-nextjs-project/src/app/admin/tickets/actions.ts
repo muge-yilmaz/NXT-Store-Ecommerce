@@ -6,8 +6,6 @@ import { revalidatePath } from "next/cache";
 
 export async function toggleTicketStatusAction(ticketId: string, newStatus: string) {
   try {
-
-    // ADMİN YETKİ KONTROLÜ
     await requireAdmin();
     const db = prisma as any;
 
@@ -29,7 +27,6 @@ export async function toggleTicketStatusAction(ticketId: string, newStatus: stri
 
 export async function deleteTicketAction(ticketId: string) {
   try {
-    // ADMİN YETKİ KONTROLÜ
     await requireAdmin();
     const db = prisma as any;
 

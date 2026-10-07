@@ -21,33 +21,29 @@ interface ProfileFormProps {
 
 export default function ProfileForm({ dbUser }: ProfileFormProps) {
 
-  // Rakamları otomatik olarak "0555-444-33-22" formatına dönüştüren fonksiyon
+  // The following function formats the phone number as the user types, ensuring it adheres to the desired format (e.g., 0555-444-33-22). It also handles cases where the user deletes characters, maintaining the correct format throughout.
   const formatPhoneNumber = (value: string) => {
-    // Önce rakam dışındaki her şeyi temizle
     const numbers = value.replace(/\D/g, "");
 
-    // Kullanıcı sildikçe formatın bozulmaması için adım adım inşa ediyoruz
     if (numbers.length <= 4) {
-      return numbers; // örn: "0555"
+      return numbers;
     }
     if (numbers.length <= 7) {
-      return `${numbers.slice(0, 4)}-${numbers.slice(4)}`; // örn: "0555-444"
+      return `${numbers.slice(0, 4)}-${numbers.slice(4)}`;
     }
     if (numbers.length <= 9) {
-      return `${numbers.slice(0, 4)}-${numbers.slice(4, 7)}-${numbers.slice(7)}`; // örn: "0555-444-33"
+      return `${numbers.slice(0, 4)}-${numbers.slice(4, 7)}-${numbers.slice(7)}`;
     }
-    // En fazla 11 rakam olacak şekilde nihai format:
-    return `${numbers.slice(0, 4)}-${numbers.slice(4, 7)}-${numbers.slice(7, 9)}-${numbers.slice(9, 11)}`; // örn: "0555-444-33-22"
+    // Final format: 0555-444-33-22 (11 numbers + 3 dashes = 14 characters)
+    return `${numbers.slice(0, 4)}-${numbers.slice(4, 7)}-${numbers.slice(7, 9)}-${numbers.slice(9, 11)}`;
   };
-
-  // Rakam dışındaki her şeyi silen fonksiyon
   const onlyNumbers = (e: React.FormEvent<HTMLInputElement>) => {
     e.currentTarget.value = e.currentTarget.value.replace(/\D/g, "");
   };
 
-  // E-posta kutusuna sadece geçerli karakterlerin yazılmasını sağlar (Boşlukları ve geçersiz karakterleri anında siler)
+
   const cleanEmailInput = (value: string) => {
-    // Sadece küçük/büyük harf, rakam ve @, ., _, - işaretlerine izin ver
+    // Only allow lowercase letters, numbers, and specific symbols for email addresses
     return value.toLowerCase().replace(/[^a-z0-9@._-]/g, "");
   };
 
@@ -58,7 +54,7 @@ export default function ProfileForm({ dbUser }: ProfileFormProps) {
         <TabsTrigger value="address" className="rounded-lg text-xs sm:text-sm font-medium">Address</TabsTrigger>
       </TabsList>
 
-      {/* 1. SEKME: HESAP BİLGİLERİ */}
+      {/* Account Tab */}
       <TabsContent value="account" className="border border-border/80 rounded-2xl p-4 sm:p-6 bg-card shadow-sm">
         <h2 className="text-base sm:text-lg font-bold mb-4 sm:mb-6 text-foreground">My Information</h2>
 
@@ -72,7 +68,7 @@ export default function ProfileForm({ dbUser }: ProfileFormProps) {
               placeholder="Enter your name"
               required
               minLength={2}
-              className="h-10 text-sm" 
+              className="h-10 text-sm"
             />
           </div>
 
@@ -85,12 +81,12 @@ export default function ProfileForm({ dbUser }: ProfileFormProps) {
               defaultValue={dbUser.email || ""}
               placeholder="Enter your email"
               required
-              // Sıkı e-posta format doğrulaması (en az bir karakter + @ + en az bir karakter + . + en az iki karakter uzantı)
+              // HTML5 email validation pattern to ensure a valid email format
               pattern="[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}"
               title="Please enter a valid email address (e.g. name@domain.com)"
               className="h-10 text-sm"
               onInput={(e) => {
-                // Kullanıcı yazarken boşluk veya geçersiz sembol girmeye çalışırsa anında siler:
+                // Clean the email input to only allow valid characters for an email address
                 e.currentTarget.value = cleanEmailInput(e.currentTarget.value);
               }}
             />
@@ -100,11 +96,11 @@ export default function ProfileForm({ dbUser }: ProfileFormProps) {
             <Button
               type="submit" variant="default" className="w-full sm:w-auto rounded-xl px-6 h-10"
               onClick={(e) => {
-                // Formun geçerliliğini kontrol et
+                // Check the form's validity before allowing the Next.js action to proceed
                 const form = e.currentTarget.closest("form");
                 if (form && !form.checkValidity()) {
-                  e.preventDefault(); // Geçersizse Next.js action'ı engelle
-                  form.reportValidity(); // Tarayıcının uyarı balonunu göster
+                  e.preventDefault();
+                  form.reportValidity();
                 }
               }}
             >
@@ -114,7 +110,7 @@ export default function ProfileForm({ dbUser }: ProfileFormProps) {
         </form>
       </TabsContent>
 
-      {/* 2. SEKME: ADRES BİLGİLERİ */}
+      {/* Address Tab */}
       <TabsContent value="address" className="border border-border/80 rounded-2xl p-4 sm:p-6 bg-card shadow-sm">
         <h2 className="text-base sm:text-lg font-bold mb-4 sm:mb-6 text-foreground">My Address</h2>
 
@@ -155,7 +151,7 @@ export default function ProfileForm({ dbUser }: ProfileFormProps) {
                 maxLength={5}
                 className="h-10 text-sm"
                 onInput={(e) => {
-                  onlyNumbers(e); // Harf yazılmasını engeller
+                  onlyNumbers(e);
                   if (e.currentTarget.value.length > 5) {
                     e.currentTarget.value = e.currentTarget.value.slice(0, 5); // 5 haneden fazlasını siler
                   }
@@ -185,11 +181,10 @@ export default function ProfileForm({ dbUser }: ProfileFormProps) {
                 defaultValue={dbUser.phone || ""}
                 placeholder="e.g. 0555-444-33-22"
                 required
-                maxLength={14} // Tire işaretleri dahil olacağı için max uzunluğu 14 yapıyoruz (11 rakam + 3 tire)
+                maxLength={14}
                 className="h-10 text-sm"
                 onInput={(e) => {
-                  onlyNumbers(e); // Harf yazılmasını engeller
-                  // Girilen değeri anında maskelenmiş formata çeviriyoruz
+                  onlyNumbers(e);
                   e.currentTarget.value = formatPhoneNumber(e.currentTarget.value);
                 }}
               />
@@ -200,11 +195,10 @@ export default function ProfileForm({ dbUser }: ProfileFormProps) {
             <Button
               type="submit" variant="default" className="w-full sm:w-auto rounded-xl px-6 h-10"
               onClick={(e) => {
-                // Formun geçerliliğini kontrol et
                 const form = e.currentTarget.closest("form");
                 if (form && !form.checkValidity()) {
-                  e.preventDefault(); // Geçersizse Next.js action'ı engelle
-                  form.reportValidity(); // Tarayıcının uyarı balonunu göster
+                  e.preventDefault();
+                  form.reportValidity();
                 }
               }}
             >

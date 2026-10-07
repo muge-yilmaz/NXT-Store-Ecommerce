@@ -63,8 +63,7 @@ export async function deleteNotificationAction(id: string) {
   }
 }
 
-
-// YENİ EKLENEN SADECE BU FONKSİYON (Checkout sırasında askı bildirimi oluşturur):
+// Send a notification to the user when their account is suspended
 export async function sendSuspendedNotificationAction() {
   try {
     const user = await getSessionUser();

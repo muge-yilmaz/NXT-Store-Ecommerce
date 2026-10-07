@@ -37,7 +37,7 @@ describe("../lib/products", () => {
 
   describe("getStorefrontProducts()", () => {
     it("should handle errors and return an empty array", async () => {
-      const consoleSpy = jest.spyOn(console, "error").mockImplementation(() => {});
+      const consoleSpy = jest.spyOn(console, "error").mockImplementation(() => { });
 
       (prisma.product.findMany as jest.Mock).mockRejectedValue(new Error("DB Error"));
 

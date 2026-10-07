@@ -1,5 +1,4 @@
 import 'server-only'
-
 import Stripe from 'stripe'
 
 const stripeKey = () => {
@@ -10,4 +9,4 @@ const stripeKey = () => {
   }
 }
 
-export const stripe = new Stripe(stripeKey ())
+export const stripe = new Stripe(stripeKey())

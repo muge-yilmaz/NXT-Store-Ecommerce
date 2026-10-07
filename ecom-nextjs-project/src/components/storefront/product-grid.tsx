@@ -4,7 +4,6 @@ import { getStorefrontProducts } from "@/lib/products";
 import type { ProductCategory, ProductSort } from "@/types/product";
 
 
-
 type ProductGridProps = {
   category: ProductCategory | "all";
   sort: ProductSort;
@@ -30,7 +29,7 @@ export async function ProductGrid({ category, sort }: ProductGridProps) {
   return (
     <div className="flex flex-col gap-8">
 
-      {/* Ürün Listesi */}
+      {/* Product Grid */}
       <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
         {products.map((product) => (
           <ProductCard

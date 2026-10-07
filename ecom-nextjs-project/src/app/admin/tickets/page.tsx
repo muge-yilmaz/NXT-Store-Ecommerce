@@ -85,7 +85,7 @@ export default async function AdminTicketsPage() {
                       </div>
                     </div>
 
-                    {/* AKSİYON BUTONLARI (Status Değiştir & Sil) */}
+                    {/* Action Buttons */}
                     <div className="flex items-center gap-2">
                       <form
                         action={async () => {
@@ -99,7 +99,7 @@ export default async function AdminTicketsPage() {
                         </Button>
                       </form>
 
-                      {/* SILME BUTONU */}
+                      {/* Delete Button */}
                       <form
                         action={async () => {
                           "use server";

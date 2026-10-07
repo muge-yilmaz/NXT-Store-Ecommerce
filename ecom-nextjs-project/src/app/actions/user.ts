@@ -6,7 +6,7 @@ import { prisma } from "@/lib/prisma";
 export async function checkUserSuspendedAction() {
   try {
     const user = await getSessionUser();
-    if (!user?.email) return null; // Kullanıcı oturumu yoksa null döndür
+    if (!user?.email) return null;
 
     const db = prisma as any;
     if (db.user) {

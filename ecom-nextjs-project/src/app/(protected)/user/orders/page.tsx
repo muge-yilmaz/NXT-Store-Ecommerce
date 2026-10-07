@@ -11,7 +11,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { prisma } from "@/lib/prisma";
-import { getAdmin, getSessionUser } from "@/lib/auth0-utils"; // Kullanıcı bilgisi için
+import { getAdmin, getSessionUser } from "@/lib/auth0-utils";
 import { Currency, formatPrice } from "@/types/currency";
 import { CancelOrderButton } from "./cancel-orders-button";
 import { redirect } from "next/navigation";
@@ -24,9 +24,8 @@ export const dynamic = "force-dynamic";
 
 export default async function UserOrdersPage() {
   const user = await getSessionUser();
-  const admin = await getAdmin(); // 1. EKSİK OLAN SATIR EKLENDİ
+  const admin = await getAdmin();
 
-  // 2. ADMIN YÖNLENDİRMESİ
   if (admin) {
     redirect("/admin/orders");
   }
@@ -34,7 +33,7 @@ export default async function UserOrdersPage() {
   const db = prisma as any;
   let orders: any[] = [];
 
-try {
+  try {
     if (db.order && user) {
       orders = await db.order.findMany({
         where: {
@@ -96,15 +95,13 @@ try {
 
       <div className="space-y-4">
         {orders.map((order: any) => {
-          // Sipariş Durumu Kontrolleri
           const isCancelled = order.status === "CANCELLED";
           const isShipped = order.status === "SHIPPED";
 
-          // Kargolanmadıysa ve İptal Edilmediyse İptal Edilebilir kabul ediyoruz
           const canCancel = !isShipped && !isCancelled;
           const isCancelledByAdmin = isCancelled && order.cancelledBy === "ADMIN";
 
-        return (
+          return (
             <Card key={order.id} className="overflow-hidden border-border/80 shadow-sm">
               <CardHeader className="bg-muted/30 border-b border-border/50 p-3 sm:p-4">
                 <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
@@ -200,7 +197,7 @@ try {
                   ))}
                 </div>
 
-                {/* ADMIN TARAFINDAN İPTAL UYARISI */}
+                {/* ADMIN CANCELLATION NOTICE */}
                 {isCancelledByAdmin && (
                   <div className="bg-amber-500/10 border border-amber-500/20 rounded-lg p-3.5 flex items-start gap-3 text-amber-900 dark:text-amber-200 text-xs mt-2">
                     <AlertCircle className="size-4 shrink-0 text-amber-600 dark:text-amber-400 mt-0.5" />
@@ -211,14 +208,14 @@ try {
                       </p>
                       <Button asChild variant="link" size="sm" className="h-auto p-0 text-xs text-amber-700 dark:text-amber-300 underline mt-1">
                         <Link href="/support">
-                        <Headphones className="size-3 mr-1 inline" /> Contact Support
+                          <Headphones className="size-3 mr-1 inline" /> Contact Support
                         </Link>
                       </Button>
                     </div>
                   </div>
                 )}
 
-                {/* İPTAL ET BUTONU */}
+                {/* CANCEL BUTTON */}
                 {canCancel && (
                   <div className="flex justify-end pt-2 border-t border-border/40">
                     <CancelOrderButton orderId={order.id} />

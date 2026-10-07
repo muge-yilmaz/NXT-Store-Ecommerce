@@ -8,7 +8,7 @@ export async function uploadProductImagesService(files: File[]): Promise<string[
   try {
     const uploadPromises = files.map(async (file) => {
       if (!file || file.size === 0) return null;
-      
+
       const blob = await put(`products/${Date.now()}-${file.name}`, file, {
         access: 'public',
         addRandomSuffix: true,

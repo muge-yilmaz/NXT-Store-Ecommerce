@@ -5,8 +5,6 @@ import compression from 'compression'
 import routes from './common/routes'
 import unknownEndpoint from './middlewares/unknownEndpoint'
 import stripeWebhooksController from './resources/stripe/webhooks/controller';
-
-// to use env variables
 import './common/env'
 
 const app: Application = express()
@@ -17,10 +15,10 @@ app.use(cors({ origin: 'http://localhost:3000' }))
 app.use(helmet())
 app.use(compression())
 
-// 1. Stripe Webhook Endpoint (Stripe imza doğrulaması için RAW body gereklidir, express.json'dan ÖNCE olmalıdır)
+// 1. Stripe Webhook Endpoint ( for Stripe to send events to our backend )
 app.post('/webhook', express.raw({ type: 'application/json' }), stripeWebhooksController.receiveUpdates)
 
-// 2. Genel İstekler İçin JSON Parsing
+// 2. JSON Parsing
 app.use(
   express.urlencoded({
     extended: true,
@@ -36,7 +34,7 @@ app.get('/', (req: Request, res: Response) => {
   })
 })
 
-// API Rotaları (/v1/checkout vb.)
+// API Routes (/v1/checkout vb.)
 app.use('/v1/', routes)
 
 // Handle unknown endpoints

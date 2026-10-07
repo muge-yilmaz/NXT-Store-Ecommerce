@@ -3,7 +3,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { headers } from 'next/headers'
 import { stripe } from '@/lib/stripe';
 import { z } from 'zod';
-import { requireUserOr401 } from '@/lib/auth0-utils'; // Kullanıcı bilgisini almak için ekledik
+import { requireUserOr401 } from '@/lib/auth0-utils';
 
 
 const CheckoutSchema = z.object({
@@ -20,15 +20,15 @@ export async function POST(req: NextRequest) {
     const headersList = await headers()
     const origin = headersList.get('origin')
 
-   // requireUserOr401 kontrolü
+    // Check requireUserOr401
     const userOrResponse = await requireUserOr401();
     if (userOrResponse instanceof Response) {
-      return userOrResponse; // Oturum yoksa doğrudan 401 döner
+      return userOrResponse; // If the user is not authenticated, return the 401 response directly
     }
 
     const user = userOrResponse;
 
-    // Sepette 1 ürün de olsa, 5 ürün de olsa hepsini tek seferde JSON olarak yakalıyoruz:
+    // Validate the request body against the schema
     const body = await req.json().catch(() => ({}));
 
     const parsed = CheckoutSchema.safeParse(body);
@@ -41,18 +41,15 @@ export async function POST(req: NextRequest) {
 
     const { cartItems } = parsed.data;
 
-    // Gelen sepet öğelerini Stripe'ın beklediği formata haritalıyoruz (Tek ürün yerine çoklu ürün desteği)
     const lineItems = cartItems.map(item => ({
       price: item.stripePriceId,
       quantity: item.quantity,
     }));
 
 
-    // Stripe Checkout Session oluşturma
     const session = await stripe.checkout.sessions.create({
       line_items: lineItems,
       mode: 'payment',
-      // Auth0 kullanıcı ID'si 'sub' alanında tutulur
       client_reference_id: (user as any)?.sub || (user as any)?.email || undefined,
       metadata: {
         userId: (user as any)?.sub || "",
@@ -63,9 +60,6 @@ export async function POST(req: NextRequest) {
     });
 
 
-    // GÜVENLİK KONTROLÜ:
-    // Eğer Stripe bir şekilde URL dönmediyse, süreci güvenli bir hatayla durduruyoruz.
-    // Böylece TypeScript alttaki satırda session.url'in KESİNLİKLE null olmayacağını anlıyor.
     if (!session.url) {
       return NextResponse.json(
         { error: "Stripe checkout session URL is missing." },

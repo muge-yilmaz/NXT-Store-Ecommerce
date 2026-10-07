@@ -13,11 +13,9 @@ import {
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { useState } from "react";
-import { id } from "zod/v4/locales";
 import { submitSupportTicketAction } from "./actions";
 
 
-// Sıkça Sorulan Sorular Verisi
 const faqItems = [
   {
     id: "faq-1",
@@ -47,16 +45,14 @@ const faqItems = [
     id: "faq-5",
     question: "Why is my account suspended and how can I reactivate it?",
     answer:
-     "Accounts may be temporarily suspended due to security checks, unusual activity, or policy violations. While suspended, you cannot place new orders, but you can still access your account and view past orders. To appeal or reactivate your account, please submit a support ticket below with 'Account Suspension Appeal' as the subject.",
+      "Accounts may be temporarily suspended due to security checks, unusual activity, or policy violations. While suspended, you cannot place new orders, but you can still access your account and view past orders. To appeal or reactivate your account, please submit a support ticket below with 'Account Suspension Appeal' as the subject.",
   },
 ];
 
 
 export default function SupportPage() {
-  // Açık olan Soru ID'sini tutan state (Dropdown Mantığı)
   const [openFaq, setOpenFaq] = useState<string | null>("faq-1");
 
-  // Form State'leri
   const [loading, setLoading] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [orderId, setOrderId] = useState("");
@@ -84,7 +80,6 @@ export default function SupportPage() {
 
   return (
     <main className="container max-w-3xl mx-auto space-y-6 px-4 py-6 sm:px-6 sm:py-10 pb-12 md:pb-96 lg:pb-12">
-      {/* Üst Geri Dönüş ve Başlık Alanı */}
       <div className="space-y-3">
         <Button asChild variant="ghost" size="sm" className="-ml-2 text-muted-foreground">
           <Link href="/">
@@ -106,7 +101,7 @@ export default function SupportPage() {
       </div>
 
 
-      {/* İletişim Kartları */}
+      {/* Contact Cards */}
       <div className="grid gap-4 md:grid-cols-3">
         <Card className="border-border/60 shadow-sm">
           <CardHeader>
@@ -117,9 +112,9 @@ export default function SupportPage() {
             </CardDescription>
           </CardHeader>
           <CardContent className="text-sm font-medium ">
-          <a href="mailto:support@nxtstore.com" className="text-primary hover:underline">
-            support@nxtstore.com
-          </a>
+            <a href="mailto:support@nxtstore.com" className="text-primary hover:underline">
+              support@nxtstore.com
+            </a>
           </CardContent>
         </Card>
 
@@ -152,7 +147,7 @@ export default function SupportPage() {
         </Card>
       </div>
 
-      {/* Sıkça Sorulan Sorular (FAQ) */}
+      {/* FAQ */}
       <div className="grid gap-8 md:grid-cols-2 items-start">
         <div className="space-y-4">
           <div className="flex items-center gap-2">
@@ -179,9 +174,8 @@ export default function SupportPage() {
                         {faq.question}
                       </span>
                       <ChevronDown
-                        className={`size-4 text-muted-foreground shrink-0 transition-transform duration-200 ${
-                          isOpen ? "rotate-180 text-primary" : ""
-                        }`}
+                        className={`size-4 text-muted-foreground shrink-0 transition-transform duration-200 ${isOpen ? "rotate-180 text-primary" : ""
+                          }`}
                       />
                     </button>
                   </Button>
@@ -197,7 +191,7 @@ export default function SupportPage() {
           </div>
         </div>
 
-        {/* Destek Mesaj Formu */}
+        {/* Support Message Form */}
         <Card className="border-border/80 shadow-md">
           <CardHeader>
             <CardTitle className="text-lg">Send Us a Message</CardTitle>
@@ -208,7 +202,7 @@ export default function SupportPage() {
 
           <CardContent>
             {submitted ? (
-            <div className="bg-emerald-500/10 border border-emerald-500/20 rounded-xl p-6 text-center space-y-3 py-8">
+              <div className="bg-emerald-500/10 border border-emerald-500/20 rounded-xl p-6 text-center space-y-3 py-8">
                 <div className="mx-auto size-12 rounded-full bg-emerald-100 dark:bg-emerald-950 flex items-center justify-center text-emerald-600 dark:text-emerald-400">
                   <CheckCircle2 className="size-6" />
                 </div>

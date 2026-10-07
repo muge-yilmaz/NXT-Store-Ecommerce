@@ -1,8 +1,7 @@
 import { prisma } from "@/lib/prisma";
 
-// 1. Profil Bilgilerini (İsim ve E-posta) Güncelleyen Servis
 export async function updateUserProfileService(
-  auth0Id: string, 
+  auth0Id: string,
   data: { name: string; email: string }
 ) {
   return await prisma.user.update({
@@ -14,9 +13,8 @@ export async function updateUserProfileService(
   });
 }
 
-// 2. Adres Bilgilerini Güncelleyen Servis
 export async function updateUserAddressService(
-  auth0Id: string, 
+  auth0Id: string,
   data: { address: string; city?: string; postalCode: string; country?: string; phone?: string }
 ) {
   return await prisma.user.update({

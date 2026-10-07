@@ -1,8 +1,6 @@
 import app from './app'
 import * as os from 'os'
 import logger from './common/logger'
-
-// to use env variables
 import './common/env'
 
 const PORT = process.env.PORT

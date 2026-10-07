@@ -15,7 +15,6 @@ export async function submitSupportTicketAction(formData: {
     const db = prisma as any;
 
     if (db.supportTicket) {
-      // 1. Destek talebini MongoDB'ye kaydediyoruz
       await db.supportTicket.create({
         data: {
           orderId: formData.orderId || null,
@@ -24,7 +23,6 @@ export async function submitSupportTicketAction(formData: {
         },
       });
 
-      // 2. BİLDİRİM TETİKLEYİCİSİ (Zil İkonunda Görünmesi İçin Admin'e Düşer)
       await createNotification({
         userId: "ADMIN",
         title: "New Support Ticket",

@@ -2,7 +2,7 @@ import supertest from 'supertest'
 import { describe, expect, jest, test } from '@jest/globals'
 import app from '../../src/app'
 
-// Stripe servisinin test esnasında patlamasını önlemek için Stripe modülünü mock'luyoruz
+// Mock the stripe module to avoid making real API calls during tests
 jest.mock('../../src/common/stripe', () => ({
   stripe: {
     checkout: {

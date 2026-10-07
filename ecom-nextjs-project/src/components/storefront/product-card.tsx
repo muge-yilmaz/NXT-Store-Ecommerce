@@ -19,7 +19,7 @@ import {
 } from "../../types/product";
 import { CheckoutButton } from "./checkout-button";
 import { checkUserSuspendedAction } from "@/app/actions/user";
-import { getCart, removeFromCart } from "@/lib/cart-store"; // getCart ve removeFromCart eklendi
+import { getCart } from "@/lib/cart-store";
 
 type ProductCardProps = {
   id: string;
@@ -29,7 +29,7 @@ type ProductCardProps = {
   currency: string;
   category: ProductCategory;
   imageUrls?: string[];
-  stripePriceId?: string; // Her ürün için Stripe Price ID'si ekledik
+  stripePriceId?: string;
 };
 
 export function ProductCard({
@@ -50,28 +50,27 @@ export function ProductCard({
     currency as Currency,
   );
 
-  // Eğer bir array geldiyse, kartta göstermek için İLK RESMİ seçiyoruz
-  // Eğer array boşsa veya tanımsızsa undefined dönerek güvenliğe alıyoruz
+  // If there are image URLs, use the first one; otherwise, set to undefined
   const mainImageUrl = imageUrls && imageUrls.length > 0 ? imageUrls[0] : undefined;
 
-  // 🌟 KRİTİK DÜZELTME: KARTTAKİ SAYIYI GERÇEK SEPET DURUMUYLA SENKRONİZE ET
+  // Sync the quantity state with the cart whenever the component mounts or the stripePriceId changes
   useEffect(() => {
     const syncQuantityWithCart = () => {
       const cart = getCart();
       const currentItem = cart.find((item) => item.stripePriceId === stripePriceId);
-      // Eğer ürün sepette varsa onun miktarını al, yoksa 0 yap
+      // If the item is found in the cart, set the quantity to its value; otherwise, set it to 0
       setQuantity(currentItem ? currentItem.quantity : 0);
     };
 
-    // İlk açılışta senkronize et
+    // Initial sync when the component mounts
     syncQuantityWithCart();
 
-    // Sepette her değişiklik olduğunda (silme, sıfırlama, artırma) karttaki sayıyı güncelle
+    // Add an event listener to update the quantity whenever the cart is updated
     window.addEventListener("cart-updated", syncQuantityWithCart);
     return () => window.removeEventListener("cart-updated", syncQuantityWithCart);
   }, [stripePriceId]);
 
-  // Sepete Ekleme ve Bildirim Tetikleme
+
   const triggerCartAdd = () => {
     if (checkoutBtnRef.current) {
       const button = checkoutBtnRef.current.querySelector("button");
@@ -82,20 +81,16 @@ export function ProductCard({
   };
 
   const handleIncrement = async () => {
-    // 1. Önce oturum kontrolü yapıyoruz
     const isSuspended = await checkUserSuspendedAction();
 
-    // 2. Eğer kullanıcı giriş YAPMAMIŞSA (isSuspended === null)
     if (isSuspended === null) {
-      // Miktarı ARTIRMIYORUZ!
-      // Doğrudan gizli butonu tetikleyerek bildirim ve login yönlendirmesini çalıştırıyoruz
+      // Handle the case where the suspension check failed (e.g., show an error message)
       triggerCartAdd();
       return;
     }
 
-    // 3. Giriş yapmışsa normal şekilde miktarı artırıp sepete ekliyoruz
     setQuantity((prev) => prev + 1);
-    triggerCartAdd(); // Gerçek sepete ekler ve bildirimi çıkarır
+    triggerCartAdd();
   };
 
   const handleDecrement = () => {
@@ -115,7 +110,7 @@ export function ProductCard({
             src={mainImageUrl}
             alt={name}
             fill
-            // En kritik değişim: Tailwind yerine doğrudan Next.js'in resmi stil prop'unu verdik
+            // Use objectFit and objectPosition to ensure the image is centered and contained within the div
             style={{ objectFit: "contain", objectPosition: "center" }}
             sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
             priority
@@ -127,7 +122,7 @@ export function ProductCard({
         )}
       </div>
 
-      {/* Gizli CheckoutButton (Sepet ve Bildirim Mekanizması İçin Arka Planda Çalışır) */}
+      {/* Hidden Checkout Button */}
       <div ref={checkoutBtnRef} className="hidden">
         <CheckoutButton
           mode="add-to-cart"
@@ -147,7 +142,7 @@ export function ProductCard({
           <p className="text-lg font-semibold text-foreground">{priceLabel}</p>
         </div>
 
-        {/* Miktar Arttırma / Azaltma Butonları */}
+        {/* Quantity Controls */}
         <div className="flex items-center gap-1.5 bg-muted/80 p-1 rounded-lg border border-border/60">
           <Button
             size="icon"

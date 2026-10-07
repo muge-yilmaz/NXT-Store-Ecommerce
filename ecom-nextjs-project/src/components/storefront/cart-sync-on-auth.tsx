@@ -5,7 +5,6 @@ import { clearCart } from "@/lib/cart-store";
 
 export function CartSyncOnAuth() {
   useEffect(() => {
-    // Tarayıcıdaki oturum izini kontrol et
     const currentSession = document.cookie
       .split("; ")
       .find((row) => row.startsWith("appSession="))
@@ -13,7 +12,7 @@ export function CartSyncOnAuth() {
 
     const lastSession = localStorage.getItem("nxt_active_session");
 
-    // Oturum değişmişse (farklı bir kullanıcı giriş yapmışsa) sepeti temizle
+    // If the last session and current session are different, clear the cart and dispatch a cart update event
     if (lastSession && currentSession && lastSession !== currentSession) {
       clearCart();
       window.dispatchEvent(new Event("cart-updated"));
@@ -22,7 +21,7 @@ export function CartSyncOnAuth() {
     if (currentSession) {
       localStorage.setItem("nxt_active_session", currentSession);
     } else {
-      // Oturum kapandıysa oturum izini sil
+      // If the session has ended, remove the session identifier from local storage
       localStorage.removeItem("nxt_active_session");
     }
   }, []);

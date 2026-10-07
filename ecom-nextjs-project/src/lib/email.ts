@@ -3,18 +3,16 @@ import { Resend } from 'resend';
 export const resend = new Resend(process.env.RESEND_API_KEY);
 
 
-// Resend ücretsiz planda varsayılan olarak "onboarding@resend.dev" adresi kullanılır.
-// Kendi alan adını (domain) doğruladıktan sonra "orders@yourdomain.com" yapabilirsin.
+// Resend free plan allows sending emails only from the verified domain. You can verify your domain in the Resend dashboard.
 const FROM_EMAIL = "NXT Store <onboarding@resend.dev>";
 
-// 1. Sipariş Alındı Emaili
 export async function sendOrderReceivedEmail(toEmail: string, orderId: string, totalAmount: string) {
-  try{
-    await resend.emails.send ({
+  try {
+    await resend.emails.send({
       from: FROM_EMAIL,
       to: [toEmail],
       subject: `Order Confirmation #${orderId} - NXT Store`,
-      html:`
+      html: `
         <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e2e8f0; rounded-lg: 8px;">
           <h2 style="color: #0f172a;">Thank you for your order! 🎉</h2>
           <p style="color: #475569;">We have received your order and are currently preparing it.</p>
@@ -25,14 +23,13 @@ export async function sendOrderReceivedEmail(toEmail: string, orderId: string, t
           <p style="color: #64748b; font-size: 14px;">You can track your order status in your account dashboard.</p>
         </div>
       `,
- });
+    });
   } catch (error) {
     console.error("Failed to send Order Received email:", error);
   }
 }
 
 
-// 2. Sipariş Kargoya Verildi Emaili
 export async function sendOrderShippedEmail(toEmail: string, orderId: string) {
   try {
     await resend.emails.send({
@@ -57,7 +54,6 @@ export async function sendOrderShippedEmail(toEmail: string, orderId: string) {
 }
 
 
-// 3. Sipariş İptal Edildi Emaili
 export async function sendOrderCancelledEmail(toEmail: string, orderId: string, cancelledBy: "USER" | "ADMIN") {
   try {
     const isByAdmin = cancelledBy === "ADMIN";
@@ -69,9 +65,9 @@ export async function sendOrderCancelledEmail(toEmail: string, orderId: string, 
         <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e2e8f0; rounded-lg: 8px;">
           <h2 style="color: #dc2626;">Order Cancelled ❌</h2>
           <p style="color: #475569;">
-            ${isByAdmin 
-              ? "Your order was cancelled by our store administrator. If a payment was collected, your full refund has been initiated." 
-              : "Your order cancellation request has been successfully processed."}
+            ${isByAdmin
+          ? "Your order was cancelled by our store administrator. If a payment was collected, your full refund has been initiated."
+          : "Your order cancellation request has been successfully processed."}
           </p>
           <div style="background-color: #fef2f2; padding: 16px; border-radius: 6px; margin: 20px 0; border: 1px solid #fecaca;">
             <p style="margin: 0; font-weight: bold;">Order ID: <span style="font-family: monospace;">${orderId}</span></p>

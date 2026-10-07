@@ -6,7 +6,7 @@ export async function createNotification({
   message,
   link,
 }: {
-  userId: string; // Adminler için "ADMIN" veya Müşterinin Email/ID bilgisi
+  userId: string;
   title: string;
   message: string;
   link: string;

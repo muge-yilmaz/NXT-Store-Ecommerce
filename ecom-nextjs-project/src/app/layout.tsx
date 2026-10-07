@@ -28,7 +28,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html
       lang="en"
       className={cn("h-full", "antialiased", geistSans.variable, geistMono.variable, "font-sans", inter.variable)} suppressHydrationWarning>
-    
+
       <body className={inter.className} suppressHydrationWarning>
         <ThemeProvider
           attribute="class"
@@ -36,11 +36,11 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           enableSystem
           disableTransitionOnChange
         >
-          {/* Oturum değiştiğinde sepeti otomatik temizleyen bileşen */}
+          {/* Cart Synchronization on Authentication */}
           <CartSyncOnAuth />
           <Header />
           {children}
-        </ThemeProvider>  
+        </ThemeProvider>
       </body>
     </html>
   );

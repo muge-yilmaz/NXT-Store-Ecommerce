@@ -14,12 +14,12 @@ export default async function AdminLayout({
 }>) {
   await requireAdmin();
 
- return (
+  return (
     <div className="flex min-h-screen w-full flex-col md:flex-row bg-background">
-      {/* Mobil Üst Bar / Masaüstü Sidebar */}
+      {/* Mobile Sidebar */}
       <AdminSidebar />
 
-      {/* Tümüyle Doğal Kaydırılabilir Alan */}
+      {/* Entirely Natural Scrollable Area */}
       <main className="container max-w-5xl mx-auto space-y-6 px-6">
         <div className="mx-auto max-w-5xl space-y-6 pb-6">
           {children}

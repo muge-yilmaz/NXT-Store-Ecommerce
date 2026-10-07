@@ -1,7 +1,5 @@
 import { z } from "zod";
-
 import { ProductSort } from "@/types/product";
-
 import { productCategorySchema } from "./product";
 
 export const productSortSchema = z.nativeEnum(ProductSort);

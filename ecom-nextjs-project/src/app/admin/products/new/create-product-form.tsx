@@ -2,7 +2,6 @@
 
 import { useActionState, type ReactNode } from "react";
 import Link from "next/link";
-
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -133,8 +132,8 @@ export function CreateProductForm() {
             Price is entered in major units and stored as <code>priceCents</code> in the database.
           </Typography>
         </div>
-      
-      {/* MOBİL VE TABLET UYUMLU ESNEK GRİD */}
+
+        {/* Mobile and Tablet Responsive Grid */}
         <div className="grid gap-4 grid-cols-1 sm:grid-cols-3">
           <FormField
             id="price"
@@ -249,8 +248,8 @@ export function CreateProductForm() {
         </label>
       </section>
 
-      {/* ALT AKSİYON BUTONLARI */}
-        <div className="flex items-center gap-3 border-t border-border pt-6 mt-8">
+      {/* Alternative Action Buttons */}
+      <div className="flex items-center gap-3 border-t border-border pt-6 mt-8">
         <Button type="submit" disabled={isPending} className="rounded-xl px-6">
           {isPending ? "Creating product..." : "Create product"}
         </Button>

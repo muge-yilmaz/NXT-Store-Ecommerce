@@ -1,7 +1,6 @@
 import { parseStorefrontFiltersFromSearchParams, productSortSchema, storefrontCategoryFilterSchema } from "@/lib/validation/storefront";
 import { ProductCategory, ProductSort } from "@/types/product";
 
-
 describe('Storefront Validation & Helper Tests', () => {
   describe('productSortSchema', () => {
     it('should validate valid sort values', () => {

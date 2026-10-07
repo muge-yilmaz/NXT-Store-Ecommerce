@@ -21,7 +21,7 @@ export async function Navbar() {
   const admin = await getAdmin();
   const db = prisma as any;
 
-  // Bildirim Kontrolü (Admin için açılmış açık destek talepleri)
+  // Notification Logic
   let hasNotification = false;
   if (user && admin && db) {
     try {
@@ -57,7 +57,7 @@ export async function Navbar() {
         <nav className="flex items-center gap-2">
           {user ? (
             <>
-            <Button asChild variant="ghost" size="icon" className="relative size-9">
+              <Button asChild variant="ghost" size="icon" className="relative size-9">
                 <Link
                   href={admin ? "/admin/tickets" : "/user/orders"}
                   title={admin ? "Support Tickets" : "Notifications"}
@@ -71,15 +71,15 @@ export async function Navbar() {
                   )}
                 </Link>
               </Button>
-              
-              {/* Sadece Müşteriler İçin My Orders Linki (Admin Değilse) */}
+
+              {/* My Orders Button */}
               {!admin && (
                 <Button asChild variant="ghost" size="sm">
                   <Link href="/user/orders">My Orders</Link>
                 </Button>
               )}
 
-              {/* Destek Linki */}
+              {/* Support Button */}
               <Button asChild variant="ghost" size="sm">
                 <Link href="/support" className="flex items-center gap-1.5">
                   <Headphones className="size-3.5" />
@@ -87,7 +87,7 @@ export async function Navbar() {
                 </Link>
               </Button>
 
-              {/* Admin Dashboard Butonu */}
+              {/* Admin Dashboard Button */}
               {admin ? (
                 <Button asChild variant="ghost" size="sm">
                   <Link href="/admin/products">Admin Dashboard</Link>
@@ -125,8 +125,8 @@ export async function Navbar() {
                   <DropdownMenuItem asChild>
                     <Link href="/profile">Profile</Link>
                   </DropdownMenuItem>
-                  
-                  {/* Dropdown İçi de Sadece Normal Müşteriye Gösterilir */}
+
+                  {/* Dropdown Menu Items For Regular Users */}
                   {!admin && (
                     <DropdownMenuItem asChild>
                       <Link href="/user/orders">My Orders</Link>

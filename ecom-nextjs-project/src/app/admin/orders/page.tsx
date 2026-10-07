@@ -1,14 +1,9 @@
-import Link from "next/link";
 import {
   Card,
   CardContent,
-  CardDescription,
   CardHeader,
-  CardTitle,
 } from "@/components/ui/card";
-import { Currency } from "@/generated/prisma";
 import { formatPrice } from "@/types/currency";
-import { error } from "console";
 import { adminCancelOrderAction, markOrderAsShippedAction } from "./actions";
 import { CheckCircle2, Truck, XCircle } from "lucide-react";
 import { prisma } from "@/lib/prisma";
@@ -83,7 +78,7 @@ export default async function AdminOrdersPage() {
               </CardHeader>
 
               <CardContent className="pt-4 space-y-4">
-                {/* Sipariş Edilen Ürünler */}
+                {/*Cancelled Items*/}
                 <div className="space-y-2">
                   {(order.items || []).map((item: any) => (
                     <div key={item.id} className="text-sm flex justify-between border-b pb-2 last:border-0">
@@ -93,11 +88,11 @@ export default async function AdminOrdersPage() {
                   ))}
                 </div>
 
-                {/* ADMİN AKSİYON BUTONLARI */}
+                {/* Admin Actions */}
                 <div className="flex flex-wrap gap-2 justify-end pt-3 border-t">
                   {!isShipped && !isCancelled && (
                     <>
-                      {/* Kargoya Ver Butonu */}
+                      {/* Mark as Shipped */}
                       <form action={async () => {
                         "use server";
                         await markOrderAsShippedAction(order.id);
@@ -107,7 +102,7 @@ export default async function AdminOrdersPage() {
                         </Button>
                       </form>
 
-                      {/* Admin İptal Et Butonu */}
+                      {/* Admin Cancel Order Button */}
                       <form action={async () => {
                         "use server";
                         await adminCancelOrderAction(order.id);

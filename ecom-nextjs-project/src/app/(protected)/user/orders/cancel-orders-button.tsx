@@ -10,7 +10,7 @@ export function CancelOrderButton({ orderId }: { orderId: string }) {
 
   const handleCancel = async () => {
     if (!confirm("Are you sure you want to cancel this order?")) return;
-    
+
     setLoading(true);
     await cancelOrderAction(orderId);
     setLoading(false);

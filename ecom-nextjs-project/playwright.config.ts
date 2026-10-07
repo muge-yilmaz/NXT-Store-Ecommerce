@@ -1,8 +1,6 @@
 import { defineConfig, devices } from '@playwright/test';
-
 import dotenv from "dotenv";
 import path from "node:path";
-
 
 dotenv.config({ path: path.resolve(__dirname, ".env.local") });
 dotenv.config({ path: path.resolve(__dirname, ".env") });
@@ -40,7 +38,7 @@ export default defineConfig({
   },
 
 
-    /* Run your local dev server before starting the tests */
+  /* Run your local dev server before starting the tests */
   webServer: {
     command: 'npm run dev',
     url: 'http://localhost:3000',
@@ -50,21 +48,21 @@ export default defineConfig({
 
   /* Configure projects for major browsers */
   projects: [
-    // 1. Admin Girişi Setup'ı
+    // 1. Admin Login Setup
     {
       name: "setup-admin",
       testDir: "./e2e/setup",
       testMatch: /auth\.setup\.ts/,
       timeout: 60_000,
     },
-    // 2. Standart Kullanıcı Girişi Setup'ı
+    // 2. User Login Setup
     {
       name: "setup-user",
       testDir: "./e2e/setup",
       testMatch: /user\.auth\.setup\.ts/,
       timeout: 60_000,
     },
-    // Admin Testleri (Yalnızca Admin Oturumuyla)
+    // Admin Tests
     {
       name: "chromium-logged-in-admin",
       testDir: "./e2e/logged-in-admin",
@@ -75,7 +73,7 @@ export default defineConfig({
       dependencies: ["setup-admin"],
     },
 
-    // Kullanıcı Testleri (Yalnızca Kullanıcı Oturumuyla)
+    // User Tests (Only with User Session)
     {
       name: "chromium-logged-in-user",
       testDir: "./e2e/logged-in-user",
@@ -86,7 +84,7 @@ export default defineConfig({
       dependencies: ["setup-user"],
     },
 
-    // Giriş Yapmamış (Anonim) Kullanıcı Testleri
+    // Logged Out Tests
     {
       name: "chromium-logged-out",
       testDir: "./e2e/logged-out",

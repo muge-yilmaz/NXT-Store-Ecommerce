@@ -1,18 +1,15 @@
-"use client"; //İstemci tarafında çalışması (onSubmit tetikleyicisi) için şart
+"use client";
 
 import { useEffect, useState } from "react";
 import { Button } from "../ui/button";
 import { addToCart, clearCart, getCart, removeFromCart } from "@/lib/cart-store";
 import { checkUserSuspendedAction } from "@/app/actions/user";
-import { createNotification } from "@/lib/notifications";
-import { sendSuspendedNotificationAction } from "@/app/actions/notifications"; // Server Action import edildi
-import { AlertTriangle, Link, Lock } from "lucide-react";
-import { useUser } from "@auth0/nextjs-auth0/client"; // Auth0'ın istemci hook'u eklendi
+import { sendSuspendedNotificationAction } from "@/app/actions/notifications";
+import { AlertTriangle, Lock } from "lucide-react";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "../ui/alert-dialog";
 
 interface CheckoutButtonProps {
-  // Çoklu sepet için buraya dinamik sepet verisi alabilsin.
-  // Eğer prop olarak bir şey geçilmezse, koddaki varsayılan test verilerini kullanır.
+  // If not selected, default is "checkout-cart" 
   mode: "add-to-cart" | "checkout-cart" | "clear-cart" | "remove-item";
   productInfo?: { stripePriceId: string; name: string };
 }
@@ -20,15 +17,15 @@ interface CheckoutButtonProps {
 export function CheckoutButton({ mode, productInfo }: CheckoutButtonProps) {
   const [loading, setLoading] = useState(false);
   const [cartCount, setCartCount] = useState(0);
-  const [isInCart, setIsInCart] = useState(false); // Ürün sepette mi kontrolü için
+  const [isInCart, setIsInCart] = useState(false);
 
-  // 1. Giriş Yapılmamışsa Açılacak Dialog State'i
+  // If the user is not logged in, show the authentication dialog
   const [showAuthDialog, setShowAuthDialog] = useState(false);
 
-  // 2. Hesabı ASKIDA İse Açılacak Dialog State'i
+  // If the user is suspended, show the suspended account dialog
   const [showSuspendedDialog, setShowSuspendedDialog] = useState(false);
 
-  // Normal Toast bildirimi için state
+  // Toast state for notifications
   const [toast, setToast] = useState({ show: false, msg: "", type: "success" as "success" | "info" | "error" });
 
   const triggerToast = (msg: string, type: "success" | "info" | "error" = "success") => {
@@ -40,7 +37,7 @@ export function CheckoutButton({ mode, productInfo }: CheckoutButtonProps) {
     const updateCartState = () => {
       const cart = getCart();
       setCartCount(cart.reduce((acc, item) => acc + item.quantity, 0));
-      // Eğer bu spesifik ürün sepette varsa true yap
+      // If the productInfo is provided, check if it's in the cart
       if (productInfo?.stripePriceId) {
         setIsInCart(cart.some(item => item.stripePriceId === productInfo.stripePriceId));
       }
@@ -52,25 +49,21 @@ export function CheckoutButton({ mode, productInfo }: CheckoutButtonProps) {
   }, [productInfo?.stripePriceId, mode]);
 
 
-  // Sepete Ekleme İşlemi (Tekil Ürün)
   const handleAddToCart = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!productInfo?.stripePriceId) {
       triggerToast("Stripe price credentials missing!", "error");
       return;
     }
     try {
-    // Oturum Kontrolü
-    const isSuspended = await checkUserSuspendedAction();
+      const isSuspended = await checkUserSuspendedAction();
 
-    // Kullanıcı giriş yapmamışsa (null döndüyse) AlertDialog'u aç ve 1.5 sn sonra login'e yönlendir
-    if (isSuspended === null) {
-      setShowAuthDialog(true);
-      return;
-    }
+      if (isSuspended === null) {
+        setShowAuthDialog(true);
+        return;
+      }
 
-    // Giriş yapılmışsa normal sepete ekle
       addToCart({ stripePriceId: productInfo.stripePriceId, quantity: 1, name: productInfo.name });
       triggerToast(`Added ${productInfo.name} to cart! 👍`, "success");
     } catch (error) {
@@ -78,7 +71,7 @@ export function CheckoutButton({ mode, productInfo }: CheckoutButtonProps) {
     }
   };
 
-  // Tekil ürün silme tetikleyicisi
+
   const handleRemoveItem = (e: React.FormEvent) => {
     e.preventDefault();
     if (!productInfo?.stripePriceId) return;
@@ -86,11 +79,11 @@ export function CheckoutButton({ mode, productInfo }: CheckoutButtonProps) {
     triggerToast(`Removed ${productInfo.name} from cart.`, "info");
   };
 
-// 2. Durum: Sepetteki Tüm Ürünleri Topluca Ödemeye Gönderme Fonksiyonu
+
   const handleCartCheckout = async (e: React.FormEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    
+
     const currentCart = getCart();
 
     if (currentCart.length === 0) {
@@ -99,28 +92,26 @@ export function CheckoutButton({ mode, productInfo }: CheckoutButtonProps) {
     }
 
     setLoading(true);
-    
+
     try {
-      // 1. OTURUM VE SUSPEND KONTROLÜ (Server Action Üzerinden)
       const isSuspended = await checkUserSuspendedAction();
 
-      // Eğer kullanıcı giriş yapmamışsa (null / undefined dönerse)
       if (isSuspended === null || isSuspended === undefined) {
         setShowAuthDialog(true);
         setLoading(false);
         return;
       }
 
-      // 2.Hesabı askıdaysa -> ÖNCE SEPETİ KAPAT, SONRA SUSPENDED DIALOG AÇ!
+      // If the user is suspended, show the suspended dialog and send a notification to the admin
       if (isSuspended === true) {
-        window.dispatchEvent(new Event("close-cart-dropdown")); // Sepet Popover'ını Kapatır
-        setShowSuspendedDialog(true);                           // AlertDialog'u Ekrana Getirir
+        window.dispatchEvent(new Event("close-cart-dropdown"));
+        setShowSuspendedDialog(true);
         triggerToast("Your purchase attempt was blocked because your account is suspended.", "error");
         await sendSuspendedNotificationAction();
         setLoading(false);
         return;
       }
-      // 3. Giriş yapmış ve aktif kullanıcı -> Stripe Checkout
+
       const response = await fetch('/api/stripe/checkout', {
         method: "POST",
         headers: {
@@ -132,7 +123,6 @@ export function CheckoutButton({ mode, productInfo }: CheckoutButtonProps) {
       const data = await response.json();
 
       if (data.url) {
-        // Sepet sadece ödeme başarılı tamamlanıp /checkout/success sayfasına gidildiğinde ClearCartOnSuccess bileşeni ile temizlenecek.
         window.location.href = data.url;
       } else {
         triggerToast(data.error || "Checkout failed", "error");
@@ -154,8 +144,8 @@ export function CheckoutButton({ mode, productInfo }: CheckoutButtonProps) {
 
 
   return (
-      <>
-      {/* 🌟 1. AUTHENTICATION REQUIRED DIALOG (Giriş Yapılmamışsa) */}
+    <>
+      {/* 1. AUTHENTICATION REQUIRED DIALOG  */}
       <AlertDialog open={showAuthDialog} onOpenChange={setShowAuthDialog}>
         <AlertDialogContent className="max-w-md border border-border/80 bg-background/95 p-6 shadow-2xl backdrop-blur-xl sm:rounded-3xl z-[100] ">
           <AlertDialogHeader className="flex flex-col items-center justify-center space-y-3 text-center">
@@ -173,12 +163,12 @@ export function CheckoutButton({ mode, productInfo }: CheckoutButtonProps) {
             </div>
           </AlertDialogHeader>
 
-          {/* Alt Buton Grubu (İki Butonlu Dengeli Düzen) */}
+          {/* Dialog Footer */}
           <AlertDialogFooter className="mt-4 flex flex-col-reverse gap-2 sm:flex-row sm:justify-center">
             <AlertDialogCancel className="w-full rounded-xl border border-input bg-background hover:bg-accent hover:text-accent-foreground sm:w-1/2 cursor-pointer transition-all">
               Continue Browsing
             </AlertDialogCancel>
-            <AlertDialogAction 
+            <AlertDialogAction
               onClick={() => {
                 setShowAuthDialog(false);
                 window.location.href = "/auth/login";
@@ -191,7 +181,7 @@ export function CheckoutButton({ mode, productInfo }: CheckoutButtonProps) {
         </AlertDialogContent>
       </AlertDialog>
 
-      {/* 🌟 2. ACCOUNT SUSPENDED ALERT DIALOG (Hesap Askıdaysa Açılır) */}
+      {/* 2. ACCOUNT SUSPENDED ALERT DIALOG */}
       <AlertDialog open={showSuspendedDialog} onOpenChange={setShowSuspendedDialog}>
         <AlertDialogContent className="max-w-md border border-destructive/30 bg-background/95 p-6 shadow-2xl backdrop-blur-xl sm:rounded-3xl z-[100]">
           <AlertDialogHeader className="flex flex-col items-center justify-center space-y-3 text-center">
@@ -213,7 +203,7 @@ export function CheckoutButton({ mode, productInfo }: CheckoutButtonProps) {
             <AlertDialogCancel className="w-full rounded-xl border border-input bg-background hover:bg-accent sm:w-1/2 cursor-pointer">
               Close
             </AlertDialogCancel>
-            <AlertDialogAction 
+            <AlertDialogAction
               onClick={() => {
                 setShowSuspendedDialog(false);
                 window.location.href = "/support";
@@ -226,23 +216,21 @@ export function CheckoutButton({ mode, productInfo }: CheckoutButtonProps) {
         </AlertDialogContent>
       </AlertDialog>
 
-      {/* TOAST ALANI - DÜZ HAREKET EDEN YAZI VE TIKLAMA YÖNLENDİRMESİ */}
+      {/* Toast Area */}
       {toast.show && (
-        <div 
+        <div
           onClick={() => {
             if (toast.type === "error") {
               window.location.href = "/support";
             }
           }}
-          className={`fixed top-10 left-1/2 -translate-x-1/2 z-[110] flex items-center gap-3 rounded-2xl border border-border/85 px-6 py-4 shadow-2xl min-w-[320px] max-w-md bg-background font-medium text-sm text-foreground transition-all duration-300 ${
-            toast.type === "error" ? "cursor-pointer hover:border-destructive/50" : ""
-          }`}
+          className={`fixed top-10 left-1/2 -translate-x-1/2 z-[110] flex items-center gap-3 rounded-2xl border border-border/85 px-6 py-4 shadow-2xl min-w-[320px] max-w-md bg-background font-medium text-sm text-foreground transition-all duration-300 ${toast.type === "error" ? "cursor-pointer hover:border-destructive/50" : ""
+            }`}
         >
-          <div className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-white font-bold text-xs ${
-            toast.type === "success" ? "bg-chart-2 shadow-md" :
-            toast.type === "info" ? "bg-blue-500 shadow-md" :
-            "bg-destructive shadow-md"
-          }`}>
+          <div className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-white font-bold text-xs ${toast.type === "success" ? "bg-chart-2 shadow-md" :
+              toast.type === "info" ? "bg-blue-500 shadow-md" :
+                "bg-destructive shadow-md"
+            }`}>
             {toast.type === "success" ? "✓" : toast.type === "info" ? "i" : "!"}
           </div>
           <div className="flex flex-col gap-0.5">
@@ -255,8 +243,8 @@ export function CheckoutButton({ mode, productInfo }: CheckoutButtonProps) {
           </div>
         </div>
       )}
-      
-      {/* MOD 1: SEPETE EKLE BUTONU (KART İÇİNDEKİ) */}
+
+      {/* MOD 1: add-to-cart */}
       {mode === "add-to-cart" && (
         <form onSubmit={handleAddToCart}>
           <Button
@@ -269,7 +257,7 @@ export function CheckoutButton({ mode, productInfo }: CheckoutButtonProps) {
         </form>
       )}
 
-      {/* MOD 2: ÜRÜN SİLME BUTONU */}
+      {/* MOD 2: REMOVE-ITEM */}
       {mode === "remove-item" && isInCart && (
         <form onSubmit={handleRemoveItem}>
           <Button
@@ -282,7 +270,7 @@ export function CheckoutButton({ mode, productInfo }: CheckoutButtonProps) {
         </form>
       )}
 
-      {/* MOD 3: SEPETİ SIFIRLA BUTONU */}
+      {/* MOD 3: CLEAR-CART */}
       {mode === "clear-cart" && (
         <form onSubmit={handleClearCart} className="w-full">
           <Button
@@ -295,7 +283,7 @@ export function CheckoutButton({ mode, productInfo }: CheckoutButtonProps) {
         </form>
       )}
 
-      {/* MOD 4: PREMİUM CHECKOUT BUTTON (STRIPE TETİKLEYİCİ) */}
+      {/* MOD 4: CHECKOUT-CART */}
       {mode === "checkout-cart" && (
         <form onSubmit={handleCartCheckout} className="w-full">
           <Button
